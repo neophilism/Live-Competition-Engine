@@ -1,5 +1,7 @@
 # Live Competition Engine
 
+**Full original 55-milestone development plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
+
 Reusable, domain-neutral infrastructure for live competitions with competitors, judges, audiences, events, performances, rounds, monetization, and operator controls.
 
 The engine is intentionally not tied to acting, rap, comedy, dance, debate, or any other specific competition format. Product-specific terminology and presentation belong in separate implementations.
