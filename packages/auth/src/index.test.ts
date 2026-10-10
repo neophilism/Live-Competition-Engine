@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AuthenticationError, AuthenticationService, type AuthStore, type SessionRecord } from "./index.ts";
+import { AuthenticationError, AuthenticationService, type AuthStore, type SessionRecord } from "./index.js";
 
 class MemoryStore implements AuthStore {
   epochs = new Map([["account-a", 0], ["account-b", 0]]);
