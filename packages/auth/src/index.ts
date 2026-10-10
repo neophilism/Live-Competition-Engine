@@ -27,8 +27,11 @@ export interface Principal {
 }
 
 export class AuthenticationError extends Error {
-  constructor(public readonly code: "missing" | "invalid" | "expired" | "revoked" | "forbidden") {
+  readonly code: "missing" | "invalid" | "expired" | "revoked" | "forbidden";
+
+  constructor(code: "missing" | "invalid" | "expired" | "revoked" | "forbidden") {
     super(`Authentication failed: ${code}`);
+    this.code = code;
   }
 }
 
@@ -36,11 +39,18 @@ const digest = (kind: "session" | "recovery", value: string) =>
   createHash("sha256").update(`${kind}\0${value}`, "utf8").digest("hex");
 
 export class AuthenticationService {
+  private readonly store: AuthStore;
+  private readonly sessionLifetimeMs: number;
+  private readonly recoveryLifetimeMs: number;
+
   constructor(
-    private readonly store: AuthStore,
-    private readonly sessionLifetimeMs = 1000 * 60 * 60 * 24,
-    private readonly recoveryLifetimeMs = 1000 * 60 * 60 * 24 * 30
+    store: AuthStore,
+    sessionLifetimeMs = 1000 * 60 * 60 * 24,
+    recoveryLifetimeMs = 1000 * 60 * 60 * 24 * 30
   ) {
+    this.store = store;
+    this.sessionLifetimeMs = sessionLifetimeMs;
+    this.recoveryLifetimeMs = recoveryLifetimeMs;
     if (sessionLifetimeMs <= 0 || sessionLifetimeMs > 1000 * 60 * 60 * 24 * 30) {
       throw new RangeError("session lifetime must be between one millisecond and 30 days");
     }
