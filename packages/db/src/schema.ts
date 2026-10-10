@@ -117,3 +117,60 @@ export const results = pgTable("results", {
   details: jsonb("details").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [index("results_competition_idx").on(t.competitionId, t.status)]);
+
+
+export const accounts = pgTable("accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").unique(),
+  recoveryEpoch: integer("recovery_epoch").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  disabledAt: timestamp("disabled_at", { withTimezone: true })
+});
+
+export const accountIdentities = pgTable("account_identities", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id),
+  provider: text("provider").notNull(),
+  issuer: text("issuer").notNull(),
+  subject: text("subject").notNull(),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  uniqueIndex("account_identities_subject_uniq").on(t.provider, t.issuer, t.subject),
+  index("account_identities_account_idx").on(t.accountId)
+]);
+
+export const organizationMemberships = pgTable("organization_memberships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  accountId: uuid("account_id").notNull().references(() => accounts.id),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true })
+}, (t) => [
+  uniqueIndex("organization_memberships_account_uniq").on(t.organizationId, t.accountId),
+  index("organization_memberships_account_idx").on(t.accountId, t.status)
+]);
+
+export const authSessions = pgTable("auth_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id),
+  tokenHash: text("token_hash").notNull().unique(),
+  recoveryEpoch: integer("recovery_epoch").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true })
+}, (t) => [index("auth_sessions_account_active_idx").on(t.accountId, t.expiresAt)]);
+
+export const accountRecoveryCodes = pgTable("account_recovery_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id),
+  codeHash: text("code_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true })
+}, (t) => [
+  uniqueIndex("account_recovery_codes_hash_uniq").on(t.accountId, t.codeHash),
+  index("account_recovery_codes_account_idx").on(t.accountId, t.expiresAt)
+]);
