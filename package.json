@@ -1,0 +1,22 @@
+{
+  "name": "live-competition-engine",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @live-competition-engine/web",
+    "build": "npm run build -w @live-competition-engine/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "npm run db:generate -w @live-competition-engine/db",
+    "db:migrate": "npm run db:migrate -w @live-competition-engine/db",
+    "db:seed": "npm run db:seed -w @live-competition-engine/db",
+    "db:studio": "npm run db:studio -w @live-competition-engine/db"
+  }
+}
