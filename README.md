@@ -35,6 +35,8 @@ packages/
 
 See `docs/architecture.md` for the governing abstraction rule.
 
+Tenant custom-domain claim, DNS proof, and verified-host routing boundaries are documented in [docs/custom-domains.md](docs/custom-domains.md). Live DNS, certificate, and ingress evidence remain deployment gates.
+
 ## Local development
 
 ```bash
