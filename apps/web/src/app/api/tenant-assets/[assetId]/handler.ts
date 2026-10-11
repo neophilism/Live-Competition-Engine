@@ -10,7 +10,11 @@ export function createBrandAssetGetHandler(fetchAsset: FetchBrandAsset) {
     const asset = await fetchAsset(assetId);
     if (!asset) return new Response(null, { status: 404 });
 
-    return new Response(asset.content, {
+    const body = new Blob(
+      [asset.content.slice().buffer as ArrayBuffer],
+      { type: asset.contentType }
+    );
+    return new Response(body, {
       status: 200,
       headers: {
         "content-type": asset.contentType,
