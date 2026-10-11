@@ -1,5 +1,5 @@
 import type { TenantTheme } from "@live-competition-engine/config/theme";
-import { getSqlClient } from "./index";
+import { getSqlClient } from "./index.ts";
 
 export interface ActivatedTenantTheme {
   organizationId: string;
