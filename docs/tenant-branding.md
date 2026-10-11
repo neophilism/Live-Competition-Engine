@@ -6,4 +6,6 @@ The supported contract is intentionally finite: four hex color tokens, one of th
 
 Theme versions are scoped by `organization_id` and retained by revision. Exactly one version may be active for an organization. A caller must prove the same organization scope before parsing or persisting a tenant configuration; cross-tenant access fails closed.
 
-This increment supplies the validation and persistence boundary. An authenticated operator API, asset-upload workflow and server-side theme renderer remain follow-up work. It does not claim a custom domain, a deployed tenant site or production acceptance.
+Server rendering consumes `buildTenantThemeViewModel`, which validates untrusted theme input and returns an immutable structured model. It maps typography choices to engine-owned font stacks and exposes only fixed CSS custom-property names, relative assets and relative navigation. Renderers must bind this structure through framework APIs; they must not concatenate tenant values into raw HTML, stylesheets or scripts.
+
+The validation, persistence and server-rendering boundaries are implemented. An authenticated operator API and asset-upload workflow remain follow-up work. This does not claim a custom domain, a deployed tenant site or production acceptance.
