@@ -27,7 +27,7 @@ const request = (body: Uint8Array, contentType = "image/png", extraHeaders = {})
       "content-type": contentType,
       ...extraHeaders
     },
-    body
+    body: new Blob([body.slice().buffer as ArrayBuffer])
   });
 
 describe("tenant brand logo upload", () => {
