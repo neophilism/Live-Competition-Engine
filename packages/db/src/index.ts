@@ -22,6 +22,12 @@ export function getDatabase() {
   return drizzle(getSqlClient(), { schema });
 }
 
+export async function closeDatabaseConnection() {
+  if (!client) return;
+  await client.end();
+  client = undefined;
+}
+
 export async function checkDatabaseConnection() {
   await getSqlClient()`select 1`;
 }
