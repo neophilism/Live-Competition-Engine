@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@live-competition-engine/auth": "0.1.0",
     "@live-competition-engine/config": "0.1.0",
     "@live-competition-engine/db": "0.1.0",
     "next": "^16.0.0",
