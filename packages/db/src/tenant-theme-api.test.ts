@@ -9,6 +9,7 @@ import {
 import { parseServerEnv } from "@live-competition-engine/config";
 import type { TenantTheme } from "@live-competition-engine/config/theme";
 import { createPostgresAuthStore } from "./auth-store.ts";
+import { closeDatabaseConnection } from "./index.ts";
 import { activateTenantTheme } from "./tenant-theme.ts";
 
 const theme: TenantTheme = {
@@ -91,7 +92,7 @@ test("authorizes and transactionally versions tenant theme updates", async () =>
       WHERE organization_id = ${organizationId}
       ORDER BY revision
     `;
-    assert.deepEqual(rows, [
+    assert.deepEqual([...rows], [
       { revision: 1, is_active: false, template: "editorial" },
       { revision: 2, is_active: true, template: "compact" }
     ]);
@@ -103,5 +104,6 @@ test("authorizes and transactionally versions tenant theme updates", async () =>
     await sql`DELETE FROM organizations WHERE id IN (${organizationId}, ${otherOrganizationId})`;
     await sql`DELETE FROM accounts WHERE id = ${accountId}`;
     await sql.end();
+    await closeDatabaseConnection();
   }
 });
