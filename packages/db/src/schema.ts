@@ -1,4 +1,4 @@
-import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { foreignKey, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const competitionStatus = pgEnum("competition_status", ["draft", "published", "live", "paused", "completed", "cancelled"]);
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
@@ -66,7 +66,8 @@ export const entries = pgTable("entries", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [
   uniqueIndex("entries_unique_participant").on(t.competitionId, t.participantId),
-  index("entries_competition_status_idx").on(t.competitionId, t.status)
+  index("entries_competition_status_idx").on(t.competitionId, t.status),
+  uniqueIndex("entries_org_id_uniq").on(t.organizationId, t.id)
 ]);
 
 export const rounds = pgTable("rounds", {
@@ -80,7 +81,8 @@ export const rounds = pgTable("rounds", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [
   uniqueIndex("rounds_unique_ordinal").on(t.competitionId, t.ordinal),
-  uniqueIndex("rounds_competition_id_uniq").on(t.competitionId, t.id)
+  uniqueIndex("rounds_competition_id_uniq").on(t.competitionId, t.id),
+  uniqueIndex("rounds_org_id_uniq").on(t.organizationId, t.id)
 ]);
 
 export const performances = pgTable("performances", {
@@ -96,7 +98,8 @@ export const performances = pgTable("performances", {
   metadata: jsonb("metadata").notNull().default({})
 }, (t) => [
   uniqueIndex("performances_unique_ordinal").on(t.roundId, t.ordinal),
-  index("performances_round_status_idx").on(t.roundId, t.status)
+  index("performances_round_status_idx").on(t.roundId, t.status),
+  foreignKey({ columns: [t.organizationId, t.entryId], foreignColumns: [entries.organizationId, entries.id], name: "performances_org_entry_fk" })
 ]);
 
 export const judges = pgTable("judges", {
@@ -105,14 +108,20 @@ export const judges = pgTable("judges", {
   displayName: text("display_name").notNull(),
   externalRef: text("external_ref"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
-}, (t) => [index("judges_organization_idx").on(t.organizationId)]);
+}, (t) => [
+  index("judges_organization_idx").on(t.organizationId),
+  uniqueIndex("judges_org_id_uniq").on(t.organizationId, t.id)
+]);
 
 export const competitionJudges = pgTable("competition_judges", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").notNull().references(() => organizations.id),
   competitionId: uuid("competition_id").notNull(),
   judgeId: uuid("judge_id").notNull()
-}, (t) => [uniqueIndex("competition_judges_unique").on(t.competitionId, t.judgeId)]);
+}, (t) => [
+  uniqueIndex("competition_judges_unique").on(t.competitionId, t.judgeId),
+  foreignKey({ columns: [t.organizationId, t.judgeId], foreignColumns: [judges.organizationId, judges.id], name: "competition_judges_org_judge_fk" })
+]);
 
 export const results = pgTable("results", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -125,7 +134,11 @@ export const results = pgTable("results", {
   status: resultStatus("status").notNull().default("provisional"),
   details: jsonb("details").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
-}, (t) => [index("results_competition_idx").on(t.competitionId, t.status)]);
+}, (t) => [
+  index("results_competition_idx").on(t.competitionId, t.status),
+  foreignKey({ columns: [t.organizationId, t.entryId], foreignColumns: [entries.organizationId, entries.id], name: "results_org_entry_fk" }),
+  foreignKey({ columns: [t.organizationId, t.roundId], foreignColumns: [rounds.organizationId, rounds.id], name: "results_org_round_fk" })
+]);
 
 
 export const accounts = pgTable("accounts", {
