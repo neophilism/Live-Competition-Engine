@@ -15,4 +15,4 @@ export function parseServerEnv(
 ): ServerEnv {
   return serverEnvSchema.parse(source);
 }
-export * from "./theme.ts";
+export * from "./theme.js";
