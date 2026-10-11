@@ -4,7 +4,7 @@ import type {
   RoleGrantRecord,
   SessionRecord
 } from "@live-competition-engine/auth";
-import { getSqlClient } from "./index.ts";
+import { getSqlClient } from "./index";
 
 interface SessionRow {
   id: string;
