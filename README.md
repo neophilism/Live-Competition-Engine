@@ -61,6 +61,10 @@ npm test
 npm run build
 ```
 
+## Tenant isolation
+
+Tenant-owned relationships are bound to `organization_id` in both authorization and PostgreSQL constraints. See [tenant isolation](docs/tenant-isolation.md) for the invariant required of future media, payment, reporting, and configuration tables.
+
 ## Architecture principle
 
 A core concept belongs in this repository only if it can be described without knowing whether the implementation is a monologue competition, rap battle league, poetry slam, dance contest, debate, talent show, or another live competition format.
