@@ -50,6 +50,13 @@
       "when": 1791702600000,
       "tag": "0006_tenant_brand_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791703800000,
+      "tag": "0007_organization_domains",
+      "breakpoints": true
     }
   ]
 }

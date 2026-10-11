@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, char, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const competitionStatus = pgEnum("competition_status", ["draft", "published", "live", "paused", "completed", "cancelled"]);
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
@@ -232,4 +232,20 @@ export const organizationThemeVersions = pgTable("organization_theme_versions", 
 }, (t) => [
   primaryKey({ columns: [t.organizationId, t.revision] }),
   uniqueIndex("organization_theme_versions_one_active").on(t.organizationId).where(sql`${t.isActive}`)
+]);
+
+export const organizationDomains = pgTable("organization_domains", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  domain: varchar("domain", { length: 253 }).notNull().unique(),
+  status: text("status").notNull().default("pending"),
+  verificationTokenHash: char("verification_token_hash", { length: 64 }).notNull(),
+  challengeCreatedAt: timestamp("challenge_created_at", { withTimezone: true }).notNull().defaultNow(),
+  claimedByAccountId: uuid("claimed_by_account_id").notNull().references(() => accounts.id),
+  verifiedByAccountId: uuid("verified_by_account_id").references(() => accounts.id),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  index("organization_domains_org_status_idx").on(t.organizationId, t.status)
 ]);
