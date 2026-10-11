@@ -8,8 +8,8 @@ import {
 } from "@live-competition-engine/auth";
 import { parseServerEnv } from "@live-competition-engine/config";
 import type { TenantTheme } from "@live-competition-engine/config/theme";
-import { createPostgresAuthStore } from "./auth-store";
-import { activateTenantTheme } from "./tenant-theme";
+import { createPostgresAuthStore } from "./auth-store.ts";
+import { activateTenantTheme } from "./tenant-theme.ts";
 
 const theme: TenantTheme = {
   logoPath: "/tenant-assets/logo.svg",
