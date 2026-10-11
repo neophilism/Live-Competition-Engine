@@ -4,7 +4,16 @@ export const competitionStatus = pgEnum("competition_status", ["draft", "publish
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
 export const roundStatus = pgEnum("round_status", ["scheduled", "live", "completed", "cancelled"]);
 export const performanceStatus = pgEnum("performance_status", ["queued", "live", "completed", "skipped"]);
-export const resultStatus = pgEnum("result_status", ["provisional", "final", "void"]);\nexport const competitionRole = pgEnum("competition_role", [\n  "platform_operator",\n  "tenant_operator",\n  "event_producer",\n  "performer",\n  "judge",\n  "viewer",\n  "industry_scout"\n]);
+export const resultStatus = pgEnum("result_status", ["provisional", "final", "void"]);
+export const competitionRole = pgEnum("competition_role", [
+  "platform_operator",
+  "tenant_operator",
+  "event_producer",
+  "performer",
+  "judge",
+  "viewer",
+  "industry_scout"
+]);
 
 export const engineMetadata = pgTable("engine_metadata", {
   key: text("key").primaryKey(),
