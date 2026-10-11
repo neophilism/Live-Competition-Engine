@@ -8,4 +8,10 @@ Theme versions are scoped by `organization_id` and retained by revision. Exactly
 
 Server rendering consumes `buildTenantThemeViewModel`, which validates untrusted theme input and returns an immutable structured model. It maps typography choices to engine-owned font stacks and exposes only fixed CSS custom-property names, relative assets and relative navigation. Renderers must bind this structure through framework APIs; they must not concatenate tenant values into raw HTML, stylesheets or scripts.
 
-The validation, persistence and server-rendering boundaries are implemented. An authenticated operator API and asset-upload workflow remain follow-up work. This does not claim a custom domain, a deployed tenant site or production acceptance.
+## Operator API
+
+`POST /api/organizations/{organizationId}/theme` accepts the same finite theme contract. The endpoint requires an active opaque bearer session, active membership in the requested organization and an unexpired version-1 `tenant_operator` grant authorizing `tenant.manage`. Missing or invalid credentials return `401`; a role or tenant mismatch returns `403`; malformed themes return `400` without persistence.
+
+Activation locks the organization row, allocates the next revision and replaces the active marker in one PostgreSQL transaction. Historical revisions remain immutable. The authenticated account is recorded as `updated_by_account_id`, and a deleted tenant returns `404` without creating an orphaned theme.
+
+The validation, persistence, server-rendering and authenticated operator API boundaries are implemented. Asset upload remains follow-up work. This does not claim a custom domain, a deployed tenant site or production acceptance.
