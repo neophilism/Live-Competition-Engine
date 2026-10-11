@@ -7,10 +7,11 @@ import {
   AuthenticationService
 } from "@live-competition-engine/auth";
 import { parseServerEnv } from "@live-competition-engine/config";
+import type { TenantTheme } from "@live-competition-engine/config/theme";
 import { createPostgresAuthStore } from "./auth-store";
 import { activateTenantTheme } from "./tenant-theme";
 
-const theme = {
+const theme: TenantTheme = {
   logoPath: "/tenant-assets/logo.svg",
   colors: {
     primary: "#102A43",
@@ -21,7 +22,7 @@ const theme = {
   typography: "humanist",
   template: "editorial",
   navigation: [{ label: "Schedule", path: "/schedule" }]
-} as const;
+};
 
 test("authorizes and transactionally versions tenant theme updates", async () => {
   const sql = postgres(parseServerEnv().DATABASE_URL, { max: 1 });
