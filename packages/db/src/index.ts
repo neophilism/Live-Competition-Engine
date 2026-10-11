@@ -5,7 +5,7 @@ import * as schema from "./schema";
 
 let client: ReturnType<typeof postgres> | undefined;
 
-function getClient() {
+export function getSqlClient() {
   if (!client) {
     const env = parseServerEnv();
     client = postgres(env.DATABASE_URL, {
@@ -19,9 +19,9 @@ function getClient() {
 }
 
 export function getDatabase() {
-  return drizzle(getClient(), { schema });
+  return drizzle(getSqlClient(), { schema });
 }
 
 export async function checkDatabaseConnection() {
-  await getClient()`select 1`;
+  await getSqlClient()`select 1`;
 }
