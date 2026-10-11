@@ -14,4 +14,10 @@ Server rendering consumes `buildTenantThemeViewModel`, which validates untrusted
 
 Activation locks the organization row, allocates the next revision and replaces the active marker in one PostgreSQL transaction. Historical revisions remain immutable. The authenticated account is recorded as `updated_by_account_id`, and a deleted tenant returns `404` without creating an orphaned theme.
 
-The validation, persistence, server-rendering and authenticated operator API boundaries are implemented. Asset upload remains follow-up work. This does not claim a custom domain, a deployed tenant site or production acceptance.
+## Logo assets
+
+`POST /api/organizations/{organizationId}/brand-assets/logo` uses the same `tenant.manage` authorization boundary before reading the request body. It accepts only PNG or WebP, streams at most 512 KiB, verifies the file signature instead of trusting `Content-Type`, computes SHA-256 and stores an immutable tenant-scoped asset. Identical bytes are deduplicated only within the same organization.
+
+The returned `/api/tenant-assets/{assetId}` path is safe to place in a theme revision. Public reads expose only validated image bytes and return immutable cache, ETag and `nosniff` headers. SVG, HTML, remote URLs, filename-derived paths and general media uploads are deliberately excluded.
+
+The LC-06 validation, persistence, server-rendering, authenticated operator API and bounded logo-upload boundaries are implemented. Custom domains, deployment and production acceptance remain separate work.
