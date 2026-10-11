@@ -31,32 +31,32 @@ test("authorizes and transactionally versions tenant theme updates", async () =>
   const grantId = randomUUID();
 
   try {
-    await sql\`
+    await sql`
       INSERT INTO accounts (id, email)
-      VALUES (\${accountId}, \${\`operator-\${accountId}@example.test\`})
-    \`;
-    await sql\`
+      VALUES (${accountId}, ${`operator-${accountId}@example.test`})
+    `;
+    await sql`
       INSERT INTO organizations (id, name, slug)
       VALUES
-        (\${organizationId}, 'Tenant A', \${\`tenant-a-\${organizationId}\`}),
-        (\${otherOrganizationId}, 'Tenant B', \${\`tenant-b-\${otherOrganizationId}\`})
-    \`;
-    await sql\`
+        (${organizationId}, 'Tenant A', ${`tenant-a-${organizationId}`}),
+        (${otherOrganizationId}, 'Tenant B', ${`tenant-b-${otherOrganizationId}`})
+    `;
+    await sql`
       INSERT INTO organization_memberships (organization_id, account_id)
-      VALUES (\${organizationId}, \${accountId})
-    \`;
-    await sql\`
+      VALUES (${organizationId}, ${accountId})
+    `;
+    await sql`
       INSERT INTO role_grants (
         id, account_id, role, version, organization_id, granted_by_account_id
       ) VALUES (
-        \${grantId}, \${accountId}, 'tenant_operator', 1, \${organizationId}, \${accountId}
+        ${grantId}, ${accountId}, 'tenant_operator', 1, ${organizationId}, ${accountId}
       )
-    \`;
+    `;
 
     const auth = new AuthenticationService(createPostgresAuthStore());
     const { token } = await auth.issueSession(accountId);
     const principal = await auth.authorizeAction(
-      \`Bearer \${token}\`,
+      `Bearer ${token}`,
       "tenant.manage",
       { organizationId }
     );
@@ -64,7 +64,7 @@ test("authorizes and transactionally versions tenant theme updates", async () =>
 
     await assert.rejects(
       auth.authorizeAction(
-        \`Bearer \${token}\`,
+        `Bearer ${token}`,
         "tenant.manage",
         { organizationId: otherOrganizationId }
       ),
@@ -84,23 +84,23 @@ test("authorizes and transactionally versions tenant theme updates", async () =>
       { organizationId, revision: 2 }
     );
 
-    const rows = await sql<{ revision: number; is_active: boolean; template: string }[]>\`
+    const rows = await sql<{ revision: number; is_active: boolean; template: string }[]>`
       SELECT revision, is_active, template
       FROM organization_theme_versions
-      WHERE organization_id = \${organizationId}
+      WHERE organization_id = ${organizationId}
       ORDER BY revision
-    \`;
+    `;
     assert.deepEqual(rows, [
       { revision: 1, is_active: false, template: "editorial" },
       { revision: 2, is_active: true, template: "compact" }
     ]);
   } finally {
-    await sql\`DELETE FROM organization_theme_versions WHERE organization_id = \${organizationId}\`;
-    await sql\`DELETE FROM role_grants WHERE account_id = \${accountId}\`;
-    await sql\`DELETE FROM auth_sessions WHERE account_id = \${accountId}\`;
-    await sql\`DELETE FROM organization_memberships WHERE account_id = \${accountId}\`;
-    await sql\`DELETE FROM organizations WHERE id IN (\${organizationId}, \${otherOrganizationId})\`;
-    await sql\`DELETE FROM accounts WHERE id = \${accountId}\`;
+    await sql`DELETE FROM organization_theme_versions WHERE organization_id = ${organizationId}`;
+    await sql`DELETE FROM role_grants WHERE account_id = ${accountId}`;
+    await sql`DELETE FROM auth_sessions WHERE account_id = ${accountId}`;
+    await sql`DELETE FROM organization_memberships WHERE account_id = ${accountId}`;
+    await sql`DELETE FROM organizations WHERE id IN (${organizationId}, ${otherOrganizationId})`;
+    await sql`DELETE FROM accounts WHERE id = ${accountId}`;
     await sql.end();
   }
 });
