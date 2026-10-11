@@ -1,0 +1,500 @@
+{
+  "schemaVersion": 1,
+  "repository": "neophilism/Live-Competition-Engine",
+  "roadmapVersion": 1,
+  "planVerified": true,
+  "plannedPrCount": 55,
+  "observedAt": "2026-10-11T17:40:28.869Z",
+  "units": [
+    {
+      "id": "LC-01",
+      "title": "Repository/application foundation",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-02",
+      "title": "Core domain model",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-03",
+      "title": "Authentication and identity",
+      "origin": "original",
+      "prs": [
+        3
+      ]
+    },
+    {
+      "id": "LC-04",
+      "title": "Roles and permissions",
+      "origin": "original",
+      "prs": [
+        4
+      ]
+    },
+    {
+      "id": "LC-05",
+      "title": "Tenant architecture",
+      "origin": "original",
+      "prs": [
+        5
+      ]
+    },
+    {
+      "id": "LC-06",
+      "title": "Tenant branding and themes",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-07",
+      "title": "Custom domains",
+      "origin": "original",
+      "prs": [
+        10
+      ]
+    },
+    {
+      "id": "LC-08",
+      "title": "Hierarchical feature flags",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-09",
+      "title": "Entitlement engine",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-10",
+      "title": "Public profiles",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-11",
+      "title": "Media library",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-12",
+      "title": "Follows and audience relationships",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-13",
+      "title": "Event creation",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-14",
+      "title": "Competition configuration",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-15",
+      "title": "Generic stage builder",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-16",
+      "title": "Head-to-head and bracket model",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-17",
+      "title": "Applications and registration",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-18",
+      "title": "Producer selection console",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-19",
+      "title": "Judge system",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-20",
+      "title": "Configurable scoring",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-21",
+      "title": "Critiques and feedback",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-22",
+      "title": "Streaming foundation",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-23",
+      "title": "Backstage and green room",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-24",
+      "title": "Server-authoritative timer",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-25",
+      "title": "Producer control room",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-26",
+      "title": "Broadcast presentation",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-27",
+      "title": "Audience interaction",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-28",
+      "title": "Voting engine",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-29",
+      "title": "Voting integrity",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-30",
+      "title": "Results and history",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-31",
+      "title": "Payments and internal ledger",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-32",
+      "title": "Revenue-split engine",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-33",
+      "title": "Ticketing, PPV and entry fees",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-34",
+      "title": "Creator subscriptions",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-35",
+      "title": "Creator content and paywalls",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-36",
+      "title": "Tips and live gifts",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-37",
+      "title": "Sponsorship inventory",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-38",
+      "title": "Sponsor campaign manager",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-39",
+      "title": "Sponsorship analytics",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-40",
+      "title": "Advertising engine",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-41",
+      "title": "Merchandise and commerce hooks",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-42",
+      "title": "Booking marketplace foundation",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-43",
+      "title": "Tenant administration console",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-44",
+      "title": "Global feature-control console",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-45",
+      "title": "Content management system",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-46",
+      "title": "Moderation and trust/safety",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-47",
+      "title": "Notifications",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-48",
+      "title": "Analytics platform",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-49",
+      "title": "SaaS plan management",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-50",
+      "title": "Tenant signup and onboarding",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-51",
+      "title": "Tenant billing",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-52",
+      "title": "White-label email/communications",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-53",
+      "title": "Platform super-admin",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-54",
+      "title": "Security and tenant-isolation hardening",
+      "origin": "original",
+      "prs": []
+    },
+    {
+      "id": "LC-55",
+      "title": "Load, resilience and production hardening",
+      "origin": "original",
+      "prs": []
+    }
+  ],
+  "pullRequests": [
+    {
+      "id": 4817340009,
+      "number": 10,
+      "title": "LC-07: add verified tenant domain control plane",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/10",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T07:17:29.000Z",
+      "updatedAt": "2026-10-11T07:19:48.000Z",
+      "closedAt": "2026-10-11T07:19:48.000Z",
+      "mergedAt": "2026-10-11T07:19:48.000Z",
+      "headSha": "3f177f5724db64d2a552c9c7c8b4dcbec3d361db",
+      "baseRef": "main",
+      "mergeCommitSha": "acfb5a129c3fa5efe5b80fb2766b59cc4caaa02f"
+    },
+    {
+      "id": 4817266438,
+      "number": 9,
+      "title": "LC-06: add bounded tenant logo assets",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/9",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T07:03:09.000Z",
+      "updatedAt": "2026-10-11T07:07:08.000Z",
+      "closedAt": "2026-10-11T07:07:08.000Z",
+      "mergedAt": "2026-10-11T07:07:07.000Z",
+      "headSha": "0151a66d1ba3c72487af7b10749f44206ff2e888",
+      "baseRef": "main",
+      "mergeCommitSha": "1db9787fbcd6d3d51ae588e77955348cb9d83022"
+    },
+    {
+      "id": 4817175068,
+      "number": 8,
+      "title": "LC-06: add authenticated tenant theme API",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/8",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T06:46:24.000Z",
+      "updatedAt": "2026-10-11T06:59:59.000Z",
+      "closedAt": "2026-10-11T06:59:59.000Z",
+      "mergedAt": "2026-10-11T06:59:59.000Z",
+      "headSha": "6655893f89f5f8540d6dbb61123d4d5da35938f4",
+      "baseRef": "main",
+      "mergeCommitSha": "ea1fc9c346c07cc4c612deb95ddbe535827ff1c3"
+    },
+    {
+      "id": 4817051906,
+      "number": 7,
+      "title": "LC-06: Add safe server theme view model",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/7",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T06:18:34.000Z",
+      "updatedAt": "2026-10-11T06:20:43.000Z",
+      "closedAt": "2026-10-11T06:20:43.000Z",
+      "mergedAt": "2026-10-11T06:20:43.000Z",
+      "headSha": "b2309f47fb9f9f809046ab89ec2f8589b5b512a2",
+      "baseRef": "main",
+      "mergeCommitSha": "d0d85f3fb23a873cf69000fe35bc13c7a5b0ca69"
+    },
+    {
+      "id": 4816993374,
+      "number": 6,
+      "title": "LC-06: Add versioned tenant theme contract",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/6",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T06:06:25.000Z",
+      "updatedAt": "2026-10-11T06:14:33.000Z",
+      "closedAt": "2026-10-11T06:14:32.000Z",
+      "mergedAt": "2026-10-11T06:14:32.000Z",
+      "headSha": "022e69191d31b1a60f969cce61e475716df691c2",
+      "baseRef": "main",
+      "mergeCommitSha": "b40df00171c71a68d4b610c1f8f91a0b0c12f11e"
+    },
+    {
+      "id": 4816897783,
+      "number": 5,
+      "title": "LC-05: Enforce tenant-scoped database relationships",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/5",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T05:45:32.000Z",
+      "updatedAt": "2026-10-11T05:47:29.000Z",
+      "closedAt": "2026-10-11T05:47:29.000Z",
+      "mergedAt": "2026-10-11T05:47:29.000Z",
+      "headSha": "7a0e749e533d80d22bfe65e3ba08fd1f71c7e21c",
+      "baseRef": "main",
+      "mergeCommitSha": "25c6225e43910455d923187040602bacd7b95184"
+    },
+    {
+      "id": 4816821328,
+      "number": 4,
+      "title": "LC-04: add scoped roles and fail-closed permissions",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/4",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T05:28:00.000Z",
+      "updatedAt": "2026-10-11T05:30:30.000Z",
+      "closedAt": "2026-10-11T05:30:30.000Z",
+      "mergedAt": "2026-10-11T05:30:30.000Z",
+      "headSha": "52bb8a24e34b12c1bf4a88c1eecef1d489eca366",
+      "baseRef": "main",
+      "mergeCommitSha": "857b15617ead2b324f61eaf45ef521d261775d4b"
+    },
+    {
+      "id": 4812587220,
+      "number": 3,
+      "title": "LC-03: establish authentication and identity boundaries",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/3",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-10T16:07:03.000Z",
+      "updatedAt": "2026-10-10T16:15:33.000Z",
+      "closedAt": "2026-10-10T16:15:33.000Z",
+      "mergedAt": "2026-10-10T16:15:33.000Z",
+      "headSha": "7211950c32219f8b429457c70f5bec8e55c058a8",
+      "baseRef": "main",
+      "mergeCommitSha": "281de9c7efaf11c3a758fe434c524003eb454c32"
+    },
+    {
+      "id": 4807452897,
+      "number": 2,
+      "title": "PR 2: Competition domain model and migration",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/2",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-10T00:51:02.000Z",
+      "updatedAt": "2026-10-10T15:57:32.000Z",
+      "closedAt": "2026-10-10T15:57:31.000Z",
+      "mergedAt": "2026-10-10T15:57:31.000Z",
+      "headSha": "746e9454df53dc17f1a2351905d5e7e8394179af",
+      "baseRef": "main",
+      "mergeCommitSha": "61876c88821f859e97d33d5295fd94fa60ad4073"
+    },
+    {
+      "id": 4779656768,
+      "number": 1,
+      "title": "PR 1: Repository and application foundation",
+      "url": "https://github.com/neophilism/Live-Competition-Engine/pull/1",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-07T23:19:55.000Z",
+      "updatedAt": "2026-10-10T00:50:09.000Z",
+      "closedAt": "2026-10-10T00:50:09.000Z",
+      "mergedAt": "2026-10-10T00:50:09.000Z",
+      "headSha": "16bf9bd0702ad013eda507dcb8917d84fc662734",
+      "baseRef": "main",
+      "mergeCommitSha": "d00556f4108d828ccdeae2fb174d59f5261ba3dc"
+    }
+  ]
+}
