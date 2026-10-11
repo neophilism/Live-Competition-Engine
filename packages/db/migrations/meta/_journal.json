@@ -2,8 +2,33 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    { "idx": 0, "version": "7", "when": 1791417600000, "tag": "0000_foundation", "breakpoints": true },
-    { "idx": 1, "version": "7", "when": 1791597600000, "tag": "0001_competitions", "breakpoints": true },
-    { "idx": 2, "version": "7", "when": 1791648000000, "tag": "0002_authentication", "breakpoints": true }
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791417600000,
+      "tag": "0000_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791597600000,
+      "tag": "0001_competitions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791648000000,
+      "tag": "0002_authentication",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791696300000,
+      "tag": "0003_roles_permissions",
+      "breakpoints": true
+    }
   ]
 }
