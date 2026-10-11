@@ -28,6 +28,7 @@ PR 1 establishes:
 apps/
   web/        web application and HTTP endpoints
 packages/
+  auth/       authentication, scoped roles, and action authorization
   config/     runtime configuration validation
   db/         database connection, schema, migrations, and seed
 ```

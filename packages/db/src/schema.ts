@@ -4,7 +4,7 @@ export const competitionStatus = pgEnum("competition_status", ["draft", "publish
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
 export const roundStatus = pgEnum("round_status", ["scheduled", "live", "completed", "cancelled"]);
 export const performanceStatus = pgEnum("performance_status", ["queued", "live", "completed", "skipped"]);
-export const resultStatus = pgEnum("result_status", ["provisional", "final", "void"]);
+export const resultStatus = pgEnum("result_status", ["provisional", "final", "void"]);\nexport const competitionRole = pgEnum("competition_role", [\n  "platform_operator",\n  "tenant_operator",\n  "event_producer",\n  "performer",\n  "judge",\n  "viewer",\n  "industry_scout"\n]);
 
 export const engineMetadata = pgTable("engine_metadata", {
   key: text("key").primaryKey(),
@@ -173,4 +173,22 @@ export const accountRecoveryCodes = pgTable("account_recovery_codes", {
 }, (t) => [
   uniqueIndex("account_recovery_codes_hash_uniq").on(t.accountId, t.codeHash),
   index("account_recovery_codes_account_idx").on(t.accountId, t.expiresAt)
+]);
+
+
+export const roleGrants = pgTable("role_grants", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id),
+  role: competitionRole("role").notNull(),
+  version: integer("version").notNull().default(1),
+  organizationId: uuid("organization_id").references(() => organizations.id),
+  competitionId: uuid("competition_id").references(() => competitions.id),
+  grantedByAccountId: uuid("granted_by_account_id").notNull().references(() => accounts.id),
+  grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true })
+}, (t) => [
+  index("role_grants_account_active_idx").on(t.accountId, t.revokedAt),
+  index("role_grants_organization_idx").on(t.organizationId, t.role),
+  index("role_grants_competition_idx").on(t.competitionId, t.role)
 ]);

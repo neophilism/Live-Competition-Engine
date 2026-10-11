@@ -10,6 +10,42 @@ export interface SessionRecord {
   revokedAt: Date | null;
 }
 
+export const competitionRoles = [
+  "platform_operator",
+  "tenant_operator",
+  "event_producer",
+  "performer",
+  "judge",
+  "viewer",
+  "industry_scout"
+] as const;
+
+export type CompetitionRole = (typeof competitionRoles)[number];
+
+export const protectedActions = [
+  "platform.manage",
+  "tenant.manage",
+  "event.manage",
+  "performance.submit",
+  "judging.score",
+  "content.view_private",
+  "industry.discover"
+] as const;
+
+export type ProtectedAction = (typeof protectedActions)[number];
+
+export interface RoleGrantRecord {
+  id: string;
+  accountId: string;
+  role: CompetitionRole;
+  version: number;
+  organizationId: string | null;
+  competitionId: string | null;
+  grantedAt: Date;
+  expiresAt: Date | null;
+  revokedAt: Date | null;
+}
+
 export interface AuthStore {
   accountRecoveryEpoch(accountId: string): Promise<number | null>;
   findSession(tokenHash: string): Promise<SessionRecord | null>;
@@ -18,12 +54,19 @@ export interface AuthStore {
   replaceRecoveryCodes(accountId: string, codes: Array<{ codeHash: string; expiresAt: Date }>): Promise<void>;
   consumeRecoveryAndRevokeSessions(accountId: string, codeHash: string, now: Date): Promise<boolean>;
   hasActiveMembership(accountId: string, organizationId: string): Promise<boolean>;
+  listRoleGrants(accountId: string): Promise<RoleGrantRecord[]>;
 }
 
 export interface Principal {
   accountId: string;
   sessionId: string;
   organizationId?: string;
+}
+
+export interface AuthorizedPrincipal extends Principal {
+  role: CompetitionRole;
+  roleGrantId: string;
+  roleGrantVersion: 1;
 }
 
 export class AuthenticationError extends Error {
@@ -34,6 +77,24 @@ export class AuthenticationError extends Error {
     this.code = code;
   }
 }
+
+const roleActions: Readonly<Record<CompetitionRole, readonly ProtectedAction[]>> = {
+  platform_operator: ["platform.manage"],
+  tenant_operator: ["tenant.manage", "event.manage", "content.view_private"],
+  event_producer: ["event.manage", "content.view_private"],
+  performer: ["performance.submit", "content.view_private"],
+  judge: ["judging.score", "content.view_private"],
+  viewer: ["content.view_private"],
+  industry_scout: ["industry.discover", "content.view_private"]
+};
+
+const validGrantScope = (grant: RoleGrantRecord) => {
+  if (grant.role === "platform_operator") return grant.organizationId === null && grant.competitionId === null;
+  if (grant.role === "tenant_operator" || grant.role === "viewer" || grant.role === "industry_scout") {
+    return grant.organizationId !== null && grant.competitionId === null;
+  }
+  return grant.organizationId !== null && grant.competitionId !== null;
+};
 
 const digest = (kind: "session" | "recovery", value: string) =>
   createHash("sha256").update(`${kind}\0${value}`, "utf8").digest("hex");
@@ -87,6 +148,29 @@ export class AuthenticationService {
       throw new AuthenticationError("forbidden");
     }
     return { accountId: session.accountId, sessionId: session.id, ...(organizationId ? { organizationId } : {}) };
+  }
+
+  async authorizeAction(
+    header: string | null,
+    action: ProtectedAction,
+    scope: { organizationId?: string; competitionId?: string } = {},
+    now = new Date()
+  ): Promise<AuthorizedPrincipal> {
+    if (scope.competitionId && !scope.organizationId) throw new AuthenticationError("forbidden");
+    const principal = await this.authorize(header, scope.organizationId, now);
+    const grants = await this.store.listRoleGrants(principal.accountId);
+    const grant = grants.find(candidate =>
+      candidate.version === 1 &&
+      validGrantScope(candidate) &&
+      candidate.grantedAt.getTime() <= now.getTime() &&
+      candidate.revokedAt === null &&
+      (candidate.expiresAt === null || candidate.expiresAt.getTime() > now.getTime()) &&
+      candidate.organizationId === (scope.organizationId ?? null) &&
+      (candidate.competitionId === null || candidate.competitionId === (scope.competitionId ?? null)) &&
+      roleActions[candidate.role].includes(action)
+    );
+    if (!grant) throw new AuthenticationError("forbidden");
+    return { ...principal, role: grant.role, roleGrantId: grant.id, roleGrantVersion: 1 };
   }
 
   async revoke(token: string, now = new Date()): Promise<void> {

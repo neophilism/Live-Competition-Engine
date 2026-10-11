@@ -14,6 +14,6 @@ account. Codes and raw session tokens must never be logged.
 
 Authorization can bind a request to an active organization membership. Missing,
 malformed, expired, revoked, recovered or cross-organization credentials fail
-closed. LC-04 will add roles and action permissions; membership in LC-03 grants
-no role by itself. Interactive provider callbacks, email delivery and production
+closed. Membership alone grants no role. LC-04 adds explicit, versioned role grants and a
+fail-closed action matrix; see `authorization.md`. Interactive provider callbacks, email delivery and production
 rate limiting require deployed-provider evidence and are not claimed here.
