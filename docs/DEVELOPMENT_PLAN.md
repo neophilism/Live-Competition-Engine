@@ -1,3 +1,5 @@
+> **Canonical PR work plan:** [`registry/roadmap.json`](../registry/roadmap.json). The detailed historic instructions below remain authoritative for scope, while all current planned work/PR links must be updated in the canonical registry.
+
 # Live Competition Engine — recovered original 55-PR development plan
 
 **Recovered source:** October 7, 2026 conversation defining the reusable engine and two downstream apps (MMS, Rap Battle Platform). This preserves all **55 numbered original milestones and titles**. Detailed build/acceptance descriptions below combine the recovered user-approved scope with engineering implementation guidance; they are not claimed as verbatim conversation transcripts. GitHub PR numbers are **not** automatically identical to these roadmap milestone identifiers.
