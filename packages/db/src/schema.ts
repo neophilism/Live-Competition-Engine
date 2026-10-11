@@ -1,4 +1,5 @@
-import { sql } from "drizzle-orm";\nimport { boolean, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const competitionStatus = pgEnum("competition_status", ["draft", "published", "live", "paused", "completed", "cancelled"]);
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
