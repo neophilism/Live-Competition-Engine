@@ -1,4 +1,4 @@
-import { foreignKey, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";\nimport { boolean, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const competitionStatus = pgEnum("competition_status", ["draft", "published", "live", "paused", "completed", "cancelled"]);
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
@@ -213,4 +213,22 @@ export const roleGrants = pgTable("role_grants", {
   index("role_grants_account_active_idx").on(t.accountId, t.revokedAt),
   index("role_grants_organization_idx").on(t.organizationId, t.role),
   index("role_grants_competition_idx").on(t.competitionId, t.role)
+]);
+export const organizationThemeVersions = pgTable("organization_theme_versions", {
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  revision: integer("revision").notNull(),
+  isActive: boolean("is_active").notNull().default(false),
+  logoPath: text("logo_path"),
+  primaryColor: varchar("primary_color", { length: 7 }).notNull(),
+  surfaceColor: varchar("surface_color", { length: 7 }).notNull(),
+  textColor: varchar("text_color", { length: 7 }).notNull(),
+  accentColor: varchar("accent_color", { length: 7 }).notNull(),
+  typography: text("typography").notNull(),
+  template: text("template").notNull(),
+  navigation: jsonb("navigation").notNull().default([]),
+  updatedByAccountId: uuid("updated_by_account_id").notNull().references(() => accounts.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  primaryKey({ columns: [t.organizationId, t.revision] }),
+  uniqueIndex("organization_theme_versions_one_active").on(t.organizationId).where(sql`${t.isActive}`)
 ]);
