@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { parseServerEnv } from "@live-competition-engine/config";
-import * as schema from "./schema";
+import * as schema from "./schema.ts";
 
 let client: ReturnType<typeof postgres> | undefined;
 
