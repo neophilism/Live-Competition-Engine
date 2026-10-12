@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "repository": "neophilism/Live-Competition-Engine",
+  "classificationStatus": "unverified",
+  "coverageComplete": false,
+  "components": [],
+  "dataFlows": [],
+  "sourceObservations": [
+    {
+      "path": "README.md",
+      "blobSha": "2794201fae338569d1e0dcc921a6c14071b272fc"
+    }
+  ],
+  "limitations": [
+    "This is a discovery placeholder, not a complete E2EESA component inventory or a claim that no protected flows exist.",
+    "Use the pinned upstream 0.2 component-inventory and scoped-assessment contracts for actual assessment."
+  ]
+}
