@@ -1,7 +1,7 @@
 {
   "repository": "neophilism/Live-Competition-Engine",
   "title": "Live-Competition-Engine",
-  "version": 1,
+  "version": 2,
   "planVerified": true,
   "plannedPrCount": 55,
   "sourceFiles": [
@@ -11,12 +11,18 @@
     {
       "id": "LC-01",
       "title": "Repository/application foundation",
-      "origin": "original"
+      "origin": "original",
+      "contributingPrs": [
+        1
+      ]
     },
     {
       "id": "LC-02",
       "title": "Core domain model",
-      "origin": "original"
+      "origin": "original",
+      "contributingPrs": [
+        2
+      ]
     },
     {
       "id": "LC-03",
@@ -36,7 +42,13 @@
     {
       "id": "LC-06",
       "title": "Tenant branding and themes",
-      "origin": "original"
+      "origin": "original",
+      "contributingPrs": [
+        6,
+        7,
+        8,
+        9
+      ]
     },
     {
       "id": "LC-07",
@@ -283,5 +295,6 @@
       "title": "Load, resilience and production hardening",
       "origin": "original"
     }
-  ]
+  ],
+  "contributionEvidenceNote": "contributingPrs are observed PRs that started work toward an unaccepted package, not full package acceptance. Complete a package only by validated prs references."
 }
