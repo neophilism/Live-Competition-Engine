@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { projectProfile, type ProfileRecord } from "./index.ts";
+import { projectProfile, ProfileService, type ProfileRecord } from "./index.ts";
 const id = (n: number) => "00000000-0000-4000-8000-" + String(n).padStart(12, "0");
 const org = id(1), owner = id(2), event = id(3);
 const base: ProfileRecord = { id: id(4), organizationId: org, ownerAccountId: owner, revision: 1,
@@ -33,4 +33,32 @@ test("malformed or oversized profile data fails validation", () => {
     { revision: 0 }, { roles: ["admin"] }, { roles: ["judge", "judge"] }, { history: [{ eventId: "bad", title: "", public: true }] }]) {
     assert.throws(() => projectProfile({ ...base, ...change } as ProfileRecord, org, null), /Invalid profile/);
   }
+});
+
+test("owner-only edits reject mass assignment and stale revisions", async () => {
+  let saved: ProfileRecord | null = null;
+  const service = new ProfileService({
+    find: async () => saved,
+    compareAndSet: async (profile, expected) => {
+      if ((saved?.revision ?? null) !== expected) return false;
+      saved = structuredClone(profile);
+      return true;
+    }
+  });
+  const viewer = { organizationId: org, accountId: owner };
+  const patch = { displayName: "Public name", bio: "", roles: ["performer"] as const, visibility: "public" as const };
+  assert.equal((await service.edit(org, base.id, viewer, patch, null)).revision, 1);
+  await assert.rejects(() => service.edit(org, base.id, { ...viewer, accountId: id(8) }, patch, 1), /edit denied/);
+  await assert.rejects(() => service.edit(org, base.id, viewer, { ...patch, ownerAccountId: id(8) } as typeof patch, 1), /Invalid profile patch/);
+  await assert.rejects(() => service.edit(org, base.id, viewer, patch, null), /revision conflict/);
+  assert.equal((await service.edit(org, base.id, viewer, { ...patch, visibility: "private" }, 1)).revision, 2);
+  assert.equal(await service.read(org, base.id, null), null);
+  assert.notEqual(await service.read(org, base.id, viewer), null);
+  await assert.rejects(() => service.edit(org, base.id, viewer, patch, 1), /revision conflict/);
+});
+test("concurrent edit compare-and-set failure is propagated", async () => {
+  const service = new ProfileService({ find: async () => ({ ...base }), compareAndSet: async () => false });
+  await assert.rejects(() => service.edit(org, base.id, { organizationId: org, accountId: owner }, {
+    displayName: "Changed", bio: "", roles: [], visibility: "public"
+  }, 1), /revision conflict/);
 });

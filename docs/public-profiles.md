@@ -15,11 +15,11 @@ viewer from client-supplied data.
 
 This PR is deliberately draft. Remaining LC-10 acceptance work:
 - Persist profiles and publication state with tenant/account constraints.
-- Authorize owner/operator edits and record revisions/audit.
+- Implement the durable compare-and-set store and atomic audit; owner-only edit authorization and revision conflicts are implemented in ProfileService. Operator moderation remains to integrate.
 - Link history to actual authorized, published competition results.
 - Wire authenticated/public HTTP read paths and accessible profile pages.
 - Add database and HTTP integration tests; verify migration/typecheck/build CI.
 
-The pure projection is independently implementable on existing merged identity
+ProfileService rejects mass assignment, limits edits to the authenticated owner and uses an atomic compare-and-set storage contract to prevent lost updates. Six local Node test groups pass, including stale revision and concurrent edit cases.\n\nThe pure projection is independently implementable on existing merged identity
 and tenancy foundations. It does not require pending feature-flag/entitlement
 PRs and does not mark the broader LC-10 milestone complete.

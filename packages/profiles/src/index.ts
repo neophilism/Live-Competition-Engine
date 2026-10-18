@@ -68,3 +68,66 @@ export function projectProfile(
     ))
   });
 }
+
+export interface ProfileStore {
+  find(organizationId: string, profileId: string): Promise<ProfileRecord | null>;
+  // Atomic tenant/id/revision comparison; null expected revision means INSERT only.
+  compareAndSet(profile: ProfileRecord, expectedRevision: number | null): Promise<boolean>;
+}
+export interface ProfilePatch {
+  displayName: string;
+  bio: string;
+  roles: readonly ProfileRole[];
+  visibility: ProfileRecord["visibility"];
+}
+export class ProfileService {
+  private readonly store: ProfileStore;
+  constructor(store: ProfileStore) { this.store = store; }
+
+  async read(organizationId: string, profileId: string, viewer: ProfileViewer | null): Promise<ProfileView | null> {
+    if (!validId(organizationId) || !validId(profileId)) throw new Error("Invalid profile scope.");
+    if (viewer && (!validId(viewer.accountId) || viewer.organizationId !== organizationId)) return null;
+    const profile = await this.store.find(organizationId, profileId);
+    return profile ? projectProfile(profile, organizationId, viewer) : null;
+  }
+
+  /** viewer is a freshly authenticated active tenant member, never request JSON. */
+  async edit(
+    organizationId: string,
+    profileId: string,
+    viewer: ProfileViewer,
+    patch: ProfilePatch,
+    expectedRevision: number | null
+  ): Promise<ProfileView> {
+    if (!validId(organizationId) || !validId(profileId) || !validId(viewer.accountId) ||
+      viewer.organizationId !== organizationId ||
+      (expectedRevision !== null && (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1))) {
+      throw new Error("Profile edit denied.");
+    }
+    // Reject mass assignment: history, owner and revision are not client-editable.
+    const keys = Object.keys(patch).sort();
+    if (keys.join(",") !== "bio,displayName,roles,visibility") throw new Error("Invalid profile patch.");
+    const snapshot: ProfilePatch = {
+      displayName: patch.displayName, bio: patch.bio, roles: [...patch.roles], visibility: patch.visibility
+    };
+    const accountId = viewer.accountId;
+    const previous = await this.store.find(organizationId, profileId);
+    if (previous && (previous.id !== profileId || previous.organizationId !== organizationId || previous.ownerAccountId !== accountId)) {
+      throw new Error("Profile edit denied.");
+    }
+    if ((!previous && expectedRevision !== null) || (previous && previous.revision !== expectedRevision)) {
+      throw new Error("Profile revision conflict.");
+    }
+    const profile: ProfileRecord = {
+      id: profileId, organizationId, ownerAccountId: accountId,
+      revision: (previous?.revision ?? 0) + 1,
+      ...snapshot,
+      // Linked history comes only from trusted publication workflows.
+      history: previous ? previous.history.map(item => ({ ...item })) : []
+    };
+    const view = projectProfile(profile, organizationId, { organizationId, accountId });
+    if (!view) throw new Error("Profile edit denied.");
+    if (!(await this.store.compareAndSet(profile, expectedRevision))) throw new Error("Profile revision conflict.");
+    return view;
+  }
+}
