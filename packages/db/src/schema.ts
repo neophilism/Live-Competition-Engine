@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, char, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, char, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const competitionStatus = pgEnum("competition_status", ["draft", "published", "live", "paused", "completed", "cancelled"]);
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
@@ -248,4 +248,41 @@ export const organizationDomains = pgTable("organization_domains", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (t) => [
   index("organization_domains_org_status_idx").on(t.organizationId, t.status)
+]);
+
+export const featureFlags = pgTable("feature_flags", {
+  scopeKey: text("scope_key").notNull(),
+  feature: text("feature").notNull(),
+  scope: text("scope").notNull(),
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+  eventId: uuid("event_id"),
+  accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
+  enabled: boolean("enabled").notNull(),
+  revision: integer("revision").notNull(),
+  updatedByAccountId: uuid("updated_by_account_id").notNull().references(() => accounts.id),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  primaryKey({ columns: [t.scopeKey, t.feature] }),
+  index("feature_flags_organization_idx").on(t.organizationId, t.scope, t.feature),
+  foreignKey({ columns: [t.organizationId, t.eventId],
+    foreignColumns: [competitions.organizationId, competitions.id],
+    name: "feature_flags_event_tenant_fk" })
+]);
+
+export const featureDecisionAudit = pgTable("feature_decision_audit", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  feature: text("feature").notNull(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  eventId: uuid("event_id"),
+  accountId: uuid("account_id"),
+  enabled: boolean("enabled").notNull(),
+  reason: text("reason").notNull(),
+  controllingScope: text("controlling_scope").notNull(),
+  policyRevisions: jsonb("policy_revisions").notNull(),
+  evaluatedAt: timestamp("evaluated_at", { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+  index("feature_decision_audit_organization_time_idx").on(t.organizationId, t.evaluatedAt.desc()),
+  foreignKey({ columns: [t.organizationId, t.eventId],
+    foreignColumns: [competitions.organizationId, competitions.id],
+    name: "feature_decision_audit_event_tenant_fk" })
 ]);
