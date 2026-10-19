@@ -43,5 +43,16 @@ decision inside the same database transaction before returning. An absent platfo
 setting is disabled; a child cannot override an ancestor veto. Storage outages
 fail closed. The migration adds `feature_flags` and `feature_decision_audit`.
 
-A future HTTP management controller must bind actor identity and scope to a
-verified session. Do not expose these storage functions directly to clients.
+The HTTP management controller binds actor identity and scope to a verified
+session. Do not expose the storage functions directly to clients.
+
+`POST /api/feature-flags` accepts a feature, scope, boolean setting and expected
+revision. Platform scope requires `platform.manage`; tenant and account scope
+require `tenant.manage`; event scope requires `event.manage` for that competition.
+The storage layer separately confirms that the event belongs to the selected
+tenant or that an account has an active, unsuspended membership. A stale revision
+returns a conflict. `GET /api/feature-flags?organizationId=...&feature=...`
+requires active tenant membership, applies the authenticated account's policy,
+and records the decision before returning it. An optional `eventId` is checked
+against the tenant. The endpoint never accepts a client-chosen account ID for
+evaluation.

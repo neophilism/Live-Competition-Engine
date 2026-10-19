@@ -55,7 +55,7 @@ export async function setFeatureFlag(input: FeatureFlagUpdate): Promise<number> 
       const rows = await tx`SELECT 1 FROM competitions WHERE id = ${input.eventId!} AND organization_id = ${input.organizationId!}`;
       if (rows.length !== 1) throw new Error("Feature event scope denied.");
     } else if (input.scope === "account") {
-      const rows = await tx`SELECT 1 FROM organization_memberships WHERE account_id = ${input.accountId!} AND organization_id = ${input.organizationId!} AND status = 'active'`;
+      const rows = await tx`SELECT 1 FROM organization_memberships WHERE account_id = ${input.accountId!} AND organization_id = ${input.organizationId!} AND status = 'active' AND suspended_at IS NULL`;
       if (rows.length !== 1) throw new Error("Feature account scope denied.");
     } else if (input.scope === "tenant") {
       const rows = await tx`SELECT 1 FROM organizations WHERE id = ${input.organizationId!}`;
@@ -94,7 +94,7 @@ export async function evaluateStoredFeature(feature: FeatureKey, context: Featur
       if (event.length !== 1) throw new Error("Feature event scope denied.");
     }
     if (context.accountId) {
-      const member = await tx`SELECT 1 FROM organization_memberships WHERE account_id = ${context.accountId} AND organization_id = ${context.organizationId} AND status = 'active'`;
+      const member = await tx`SELECT 1 FROM organization_memberships WHERE account_id = ${context.accountId} AND organization_id = ${context.organizationId} AND status = 'active' AND suspended_at IS NULL`;
       if (member.length !== 1) throw new Error("Feature account scope denied.");
     }
     const keys = ["platform", key("tenant", context.organizationId),
