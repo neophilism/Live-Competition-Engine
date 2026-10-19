@@ -30,7 +30,7 @@ test("durable feature policy uses scoped vetoes, revisions and audited decisions
     await assert.rejects(setFeatureFlag({ scope: "account", organizationId: other, accountId: member, feature: "advertising", enabled: true, expectedRevision: 0, actorAccountId: actor }), /scope denied/);
     await assert.rejects(evaluateStoredFeature("advertising", { organizationId: other, eventId: event }), /scope denied/);
     await assert.rejects(evaluateStoredFeature("advertising", { organizationId: other, accountId: member }), /scope denied/);
-    await sql`UPDATE organization_memberships SET suspended_at = now() WHERE organization_id = ${org} AND account_id = ${member}`;
+    await sql`UPDATE organization_memberships SET status = 'suspended', suspended_at = now() WHERE organization_id = ${org} AND account_id = ${member}`;
     await assert.rejects(evaluateStoredFeature("advertising", { organizationId: org, accountId: member }), /scope denied/);
     const audit = await sql<{ enabled: boolean; reason: string }[]>`
       SELECT enabled, reason FROM feature_decision_audit
