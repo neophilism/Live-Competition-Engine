@@ -102,7 +102,7 @@ export async function evaluateStoredFeature(feature: FeatureKey, context: Featur
       context.accountId ? key("account", context.organizationId, undefined, context.accountId) : ""];
     const rows = await tx<{ scope: FeatureScope; enabled: boolean; revision: number }[]>`
       SELECT scope, enabled, revision FROM feature_flags
-      WHERE feature = ${feature} AND scope_key IN (${keys[0]}, ${keys[1]}, ${keys[2]}, ${keys[3]})
+      WHERE feature = ${feature} AND scope_key IN (${keys[0]!}, ${keys[1]!}, ${keys[2]!}, ${keys[3]!})
       FOR SHARE
     `;
     const byScope = new Map(rows.map(row => [row.scope, row]));

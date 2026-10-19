@@ -16,7 +16,8 @@ CREATE TABLE feature_flags (
     (scope = 'event' AND scope_key = 'event:' || event_id::text AND organization_id IS NOT NULL AND event_id IS NOT NULL AND account_id IS NULL) OR
     (scope = 'account' AND scope_key = 'account:' || organization_id::text || ':' || account_id::text AND organization_id IS NOT NULL AND event_id IS NULL AND account_id IS NOT NULL)
   ),
-  FOREIGN KEY (organization_id, event_id) REFERENCES competitions(organization_id, id)
+  CONSTRAINT feature_flags_event_tenant_fk
+    FOREIGN KEY (organization_id, event_id) REFERENCES competitions(organization_id, id)
 );
 
 CREATE INDEX feature_flags_organization_idx ON feature_flags (organization_id, scope, feature);
@@ -32,7 +33,8 @@ CREATE TABLE feature_decision_audit (
   controlling_scope text NOT NULL,
   policy_revisions jsonb NOT NULL,
   evaluated_at timestamptz NOT NULL DEFAULT now(),
-  FOREIGN KEY (organization_id, event_id) REFERENCES competitions(organization_id, id)
+  CONSTRAINT feature_decision_audit_event_tenant_fk
+    FOREIGN KEY (organization_id, event_id) REFERENCES competitions(organization_id, id)
 );
 
 CREATE INDEX feature_decision_audit_organization_time_idx
