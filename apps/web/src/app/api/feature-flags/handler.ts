@@ -19,7 +19,7 @@ export function createFeatureHandlers(authorizer: Authorizer, save: Save, evalua
       const input = body as Record<string, unknown>;
       if (!["platform", "tenant", "event", "account"].includes(String(input.scope)) ||
           !featureKeySchema.safeParse(input.feature).success || typeof input.enabled !== "boolean" ||
-          !Number.isSafeInteger(input.expectedRevision) || Number(input.expectedRevision) < 0 ||
+          typeof input.expectedRevision !== "number" || !Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 0 ||
           (input.scope !== "platform" && typeof input.organizationId !== "string") ||
           (input.scope === "event" && typeof input.eventId !== "string") ||
           (input.scope === "account" && typeof input.accountId !== "string")) return error(400, "invalid_feature_policy");

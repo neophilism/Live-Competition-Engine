@@ -119,7 +119,7 @@ export async function evaluateStoredFeature(feature: FeatureKey, context: Featur
           enabled, reason, controlling_scope, policy_revisions)
         VALUES (${feature}, ${context.organizationId}, ${context.eventId ?? null},
           ${context.accountId ?? null}, ${decision.enabled}, ${decision.reason},
-          ${decision.controllingScope}, ${tx.json(decision.evaluatedScopes)})
+          ${decision.controllingScope}, ${tx.json(decision.evaluatedScopes.map(layer => ({ ...layer })))})
       `;
     } });
   });
