@@ -31,3 +31,17 @@ unit; this library does not claim those future integrations are implemented.
 Validation: exhaustive 81 platform/tenant/event/account true/false/inherit cases,
 cross-tenant/event/account rejection, immutable audit evidence, malformed input,
 default-off behavior and audit-outage propagation.
+
+## Durable policy and audit storage
+
+`@live-competition-engine/db/feature-flags` stores revisioned platform, tenant,
+event and account settings. `setFeatureFlag` compares the expected revision and
+rejects a stale write. The caller must authorize the corresponding management
+action before invoking it. `evaluateStoredFeature` verifies event ownership and
+active account membership, reads the relevant settings, then records the complete
+decision inside the same database transaction before returning. An absent platform
+setting is disabled; a child cannot override an ancestor veto. Storage outages
+fail closed. The migration adds `feature_flags` and `feature_decision_audit`.
+
+A future HTTP management controller must bind actor identity and scope to a
+verified session. Do not expose these storage functions directly to clients.

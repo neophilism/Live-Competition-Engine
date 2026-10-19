@@ -57,6 +57,13 @@
       "when": 1791703800000,
       "tag": "0007_organization_domains",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792371600000,
+      "tag": "0008_feature_flags",
+      "breakpoints": true
     }
   ]
 }
