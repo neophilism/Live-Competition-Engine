@@ -80,6 +80,12 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
   await assert.rejects(moderateMedia(org,stranger,third.id,"safety"),/MEDIA_SCOPE_DENIED/);
   const unmoderated=await sql`SELECT status FROM media_versions WHERE media_id=${third.id}`;
   assert.equal(unmoderated[0]!.status,"quarantined");
+  let revision=third.revision;
+  for(let i=0;i<26;i++)revision=(await storeMediaUpload({...upload,mediaId:third.id,expectedRevision:revision})).revision;
+  const history=await listMediaVersions(org,owner,third.id);
+  assert.equal(history.items.length,25);assert.equal(history.items[0]!.revision,27);assert.equal(history.next,3);
+  const tail=await listMediaVersions(org,owner,third.id,history.next!);
+  assert.deepEqual(tail.items.map(v=>v.revision),[2,1]);assert.equal(tail.next,null);
   const versions=await sql`SELECT status,source_content,output_content FROM media_versions WHERE media_id=${media.id}`;
   assert.equal(versions.length,3);assert.ok(versions.every(v=>v.status==="revoked"&&v.source_content===null&&v.output_content===null));
   for(let i=1;i<100;i++)await storeMediaUpload(upload);
