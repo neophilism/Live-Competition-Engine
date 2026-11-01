@@ -1,5 +1,16 @@
 # Entitlements (LC-09)
 
+Authenticated callers can query their own current access with
+`GET /api/organizations/{organizationId}/entitlements?capability=event.view&eventId={eventId}`.
+The route authenticates an active tenant membership, derives the account from
+the session, and separately verifies event ownership before resolving grants.
+Event view/entry requests require an event ID. Unknown or repeated query keys,
+including client-selected account IDs, are rejected. Responses contain only
+`allowed` and `reason`, use private/no-store caching, and never expose grant IDs.
+Refunds are read on the next request; storage, authentication infrastructure,
+event lookup and audit failures return a generic 503 without granting access.
+The endpoint is a current decision, not a reusable authorization token.
+
 The server-only EntitlementService resolves current purchased and granted access
 for tickets, subscriptions, staff and manual grants. Import it from
 `@live-competition-engine/auth/entitlements`; use PostgresEntitlementStore from
@@ -32,3 +43,4 @@ Tests cover active boundaries, all statuses, cross-account/tenant/event denial,
 malformed records, staff separation, fresh refund reads and audit/storage
 failures. Database integration checks exercise real constraints and adapter
 round-trips when CI supplies PostgreSQL.
+

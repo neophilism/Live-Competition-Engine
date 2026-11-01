@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { EntitlementService } from "@live-competition-engine/auth/entitlements";
-import { PostgresEntitlementStore } from "./entitlements.ts";
+import { PostgresEntitlementStore, entitlementEventBelongsToTenant } from "./entitlements.ts";
 import { getSqlClient, closeDatabaseConnection } from "./index.ts";
 
 test("entitlement storage preserves scope constraints, refund status and decision audit", async () => {
@@ -13,6 +13,9 @@ test("entitlement storage preserves scope constraints, refund status and decisio
     await sql`INSERT INTO accounts(id) VALUES (${account})`;
     await sql`INSERT INTO organization_memberships(organization_id, account_id) VALUES (${org}, ${account})`;
     await sql`INSERT INTO competitions(id, organization_id, title) VALUES (${event}, ${org}, 'Fixture')`;
+    assert.equal(await entitlementEventBelongsToTenant(org, event), true);
+    assert.equal(await entitlementEventBelongsToTenant(other, event), false);
+    assert.equal(await entitlementEventBelongsToTenant(org, randomUUID()), false);
     await assert.rejects(sql`INSERT INTO entitlement_grants(organization_id, account_id, event_id, capability, source, status, starts_at)
       VALUES (${other}, ${account}, ${event}, 'event.view', 'ticket', 'active', 100)`, /foreign key/);
     await assert.rejects(sql`INSERT INTO entitlement_grants(organization_id, account_id, event_id, capability, source, status, starts_at)
@@ -40,3 +43,4 @@ test("entitlement storage preserves scope constraints, refund status and decisio
     await closeDatabaseConnection();
   }
 });
+

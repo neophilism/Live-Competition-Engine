@@ -1,6 +1,12 @@
 import type { EntitlementAudit, EntitlementDecision, EntitlementGrant, EntitlementStore } from "@live-competition-engine/auth/entitlements";
 import { getSqlClient } from "./index.ts";
 
+/** Verify event ownership independently of tenant-wide grants. */
+export async function entitlementEventBelongsToTenant(organizationId: string, eventId: string): Promise<boolean> {
+  const rows = await getSqlClient()`SELECT 1 FROM competitions WHERE organization_id = ${organizationId} AND id = ${eventId}`;
+  return rows.length === 1;
+}
+
 /** Trusted server adapter. Grant mutations belong to authorized provider/staff workflows. */
 export class PostgresEntitlementStore implements EntitlementStore, EntitlementAudit {
   async listGrants(organizationId: string, accountId: string): Promise<EntitlementGrant[]> {
@@ -29,3 +35,4 @@ export class PostgresEntitlementStore implements EntitlementStore, EntitlementAu
     `;
   }
 }
+

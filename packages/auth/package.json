@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./entitlements": "./src/entitlements.ts"
+    "./entitlements": "./src/entitlements.ts",
+    "./entitlement-http": "./src/entitlement-http.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
