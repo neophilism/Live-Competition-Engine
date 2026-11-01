@@ -16,6 +16,11 @@ export async function storeMediaUpload(input: MediaUpload): Promise<{ id: string
       WHERE organization_id = ${input.organizationId} AND account_id = ${input.ownerId}
       AND status = 'active' AND suspended_at IS NULL FOR SHARE`;
     if (members.length !== 1) throw new Error("MEDIA_SCOPE_DENIED");
+    if(!input.mediaId){
+      const owned=await tx<{count:number}[]>`SELECT count(*)::integer AS count FROM media_library
+        WHERE organization_id=${input.organizationId} AND owner_account_id=${input.ownerId} AND revoked_at IS NULL`;
+      if(owned[0]!.count>=100)throw new Error("MEDIA_QUOTA_EXCEEDED");
+    }
     const usage = await tx<{ bytes: number; versions: number }[]>`SELECT
       COALESCE(sum(COALESCE(octet_length(source_content),0)+COALESCE(octet_length(output_content),0)),0)::double precision AS bytes,
       count(*) FILTER (WHERE source_content IS NOT NULL OR output_content IS NOT NULL)::integer AS versions
@@ -63,6 +68,16 @@ export async function readMediaPlayback(organizationId: string, ownerId: string,
   });
 }
 
+export async function listOwnedMedia(organizationId: string, ownerId: string) {
+  return getSqlClient()<{ id:string; revision:number; filename:string; kind:MediaKind;
+    status:string; createdAt:Date }[]>`SELECT m.id,v.revision,v.filename,v.kind,v.status,m.created_at AS "createdAt"
+    FROM media_library m JOIN media_versions v ON v.media_id=m.id AND v.revision=m.current_revision
+    JOIN organization_memberships a ON a.organization_id=m.organization_id AND a.account_id=m.owner_account_id
+    WHERE m.organization_id=${organizationId} AND m.owner_account_id=${ownerId}
+    AND m.revoked_at IS NULL AND a.status='active' AND a.suspended_at IS NULL
+    ORDER BY m.created_at DESC,m.id LIMIT 100`;
+}
+
 export async function revokeMedia(organizationId: string, ownerId: string, id: string): Promise<boolean> {
   return getSqlClient().begin(async tx => {
     const rows = await tx<{ current_revision: number }[]>`UPDATE media_library SET revoked_at=now()
@@ -81,6 +96,30 @@ export async function revokeMedia(organizationId: string, ownerId: string, id: s
 
 export interface MediaWork {
   id: string; organizationId: string; revision: number; token: string; kind: MediaKind; content: Uint8Array;
+}
+
+/** The caller must freshly authorize tenant.manage for this exact tenant. */
+export async function moderateMedia(organizationId: string, actorId: string, id: string,
+  reason: "copyright" | "safety" | "consent"): Promise<boolean> {
+  if (!["copyright","safety","consent"].includes(reason)) throw new Error("MEDIA_MODERATION_INVALID");
+  return getSqlClient().begin(async tx => {
+    const grants=await tx`SELECT g.id FROM role_grants g
+      JOIN organization_memberships a ON a.organization_id=g.organization_id AND a.account_id=g.account_id
+      JOIN accounts c ON c.id=g.account_id
+      WHERE g.organization_id=${organizationId} AND g.account_id=${actorId} AND g.role='tenant_operator'
+      AND g.version=1 AND g.competition_id IS NULL AND g.revoked_at IS NULL AND g.granted_at<=now()
+      AND (g.expires_at IS NULL OR g.expires_at>now()) AND a.status='active' AND a.suspended_at IS NULL
+      AND c.disabled_at IS NULL FOR SHARE OF g,a,c`;
+    if(grants.length!==1)throw new Error("MEDIA_SCOPE_DENIED");
+    const rows = await tx<{ current_revision: number }[]>`UPDATE media_library SET revoked_at=now()
+      WHERE id=${id} AND organization_id=${organizationId} RETURNING current_revision`;
+    if (!rows[0]) return false;
+    await tx`UPDATE media_versions SET status='revoked',source_content=NULL,output_content=NULL,
+      worker_token=NULL,worker_expires_at=NULL WHERE media_id=${id}`;
+    await tx`INSERT INTO media_library_audit(organization_id,media_id,revision,actor_account_id,action,reason_code)
+      VALUES(${organizationId},${id},${rows[0].current_revision},${actorId},'moderate',${reason})`;
+    return true;
+  });
 }
 /** Trusted worker only, never exposed as an HTTP mutation. Expired work is reclaimable. */
 export async function claimMediaWork(): Promise<MediaWork | null> {

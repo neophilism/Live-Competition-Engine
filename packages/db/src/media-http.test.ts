@@ -17,6 +17,7 @@ function fixture() {
    if(state.authCode)throw new AuthenticationError(state.authCode);
    return {organizationId:state.tenant,accountId:account,sessionId:id};
  }},{
+   async list(organizationId,accountId){assert.deepEqual([organizationId,accountId],[org,account]);return [];},
    async upload(input){if(state.error)throw new Error(state.error);state.uploads.push(input);return{id,revision:input.expectedRevision+1};},
    async playback(organizationId,ownerId,mediaId){
      state.reads++;assert.deepEqual([organizationId,ownerId,mediaId],[org,account,id]);

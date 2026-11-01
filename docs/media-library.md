@@ -3,6 +3,8 @@
 This implementation stores bounded private media in PostgreSQL. It does not provision
 object storage or purchase a service. Each upload is limited to 8 MiB; a tenant
 has a serialized 128 MiB payload quota and at most 256 retained payload versions.
+Each owner can keep at most 100 nonwithdrawn items; listing returns that complete
+bounded collection. Withdrawing an item frees its item quota.
 Rejected and revoked payloads do not consume the version quota.
 
 An active tenant member uploads only as their authenticated account:
@@ -46,7 +48,18 @@ bounded evidence before ready status. **No production safety reviewer is wired
 or claimed here.** Fixture review responses are test-only. Never use a permanent
 allow-all reviewer. No public publication, monetization or copyright certification
 is implied by private playback. A UI, production worker isolation/reviewer
-integration and operational takedown workflow remain unfinished acceptance work.
+integration remain unfinished acceptance work. The included reusable MediaLibrary
+component and createMediaClient adapter support uploads with affirmative rights
+consent, status, authenticated blob previews and withdrawal. A downstream signed-in
+host supplies a fresh authorization callback; no session token is stored in the
+component or placed in URLs. The engine's application shell does not yet expose a
+signed-in identity flow for mounting it. Full browser acceptance remains pending.
+
+Tenant operators can POST a bounded reason code (copyright, safety or consent) to
+the item moderation endpoint. The API checks tenant.manage and storage rechecks
+the active unrevoked tenant-operator grant in the same transaction before erasing
+payloads and recording takedown evidence. Ordinary members cannot take down
+another account's files. Moderation does not expose source or derivative bytes.
 
 Verification includes Node policy/HTTP/worker tests, generated local FFmpeg
 fixtures, and PostgreSQL integration tests for isolation, concurrent revisions,

@@ -12,7 +12,8 @@
     "./tenant-domains": "./src/tenant-domains.ts",
     "./media-library": "./src/media-library.ts",
     "./media-http": "./src/media-http.ts",
-    "./media-worker": "./src/media-worker.ts"
+    "./media-worker": "./src/media-worker.ts",
+    "./media-moderation-http": "./src/media-moderation-http.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

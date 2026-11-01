@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getSqlClient, closeDatabaseConnection } from "./index.ts";
-import { storeMediaUpload, readMediaPlayback, revokeMedia, claimMediaWork, completeMediaWork } from "./media-library.ts";
+import { storeMediaUpload, readMediaPlayback, revokeMedia, claimMediaWork, completeMediaWork, moderateMedia, listOwnedMedia } from "./media-library.ts";
 import { mediaRightsVersion } from "./media-policy.ts";
 
 test("media persistence isolates tenants/owners, versions atomically and fences stale workers/revocation", async()=>{
@@ -18,6 +18,9 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
     VALUES(${org},${owner}),(${org},${stranger}),(${other},${owner})`;
   const media=await storeMediaUpload(upload);
   assert.equal(media.revision,1);
+  assert.equal((await listOwnedMedia(org,owner)).length,1);
+  assert.equal((await listOwnedMedia(other,owner)).length,0);
+  assert.equal((await listOwnedMedia(org,stranger)).length,0);
   assert.equal(await readMediaPlayback(org,owner,media.id),null);
   assert.equal(await readMediaPlayback(org,stranger,media.id),null);
   assert.equal(await readMediaPlayback(other,owner,media.id),null);
@@ -46,9 +49,18 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
   assert.equal(await completeMediaWork(renewed!,output),false);
   assert.equal(await readMediaPlayback(org,owner,media.id),null);
   await assert.rejects(storeMediaUpload({...upload,mediaId:media.id,expectedRevision:2}),/MEDIA_REVISION_CONFLICT/);
+  const second=await storeMediaUpload(upload);
+  await assert.rejects(moderateMedia(org,stranger,second.id,"copyright"),/MEDIA_SCOPE_DENIED/);
+  await sql`INSERT INTO role_grants(account_id,role,organization_id,granted_by_account_id)
+    VALUES(${stranger},'tenant_operator',${org},${owner})`;
+  await assert.rejects(moderateMedia(other,stranger,second.id,"copyright"),/MEDIA_SCOPE_DENIED/);
+  assert.equal(await moderateMedia(org,stranger,second.id,"copyright"),true);
+  assert.equal(await readMediaPlayback(org,owner,second.id),null);
+  const moderation=await sql`SELECT action,reason_code FROM media_library_audit WHERE media_id=${second.id} AND action='moderate'`;
+  assert.equal(moderation[0]!.reason_code,"copyright");
   const versions=await sql`SELECT status,source_content,output_content FROM media_versions WHERE media_id=${media.id}`;
   assert.equal(versions.length,2);assert.ok(versions.every(v=>v.status==="revoked"&&v.source_content===null&&v.output_content===null));
-  await sql`UPDATE organization_memberships SET suspended_at=now() WHERE organization_id=${org} AND account_id=${owner}`;
+  await sql`UPDATE organization_memberships SET status='suspended',suspended_at=now() WHERE organization_id=${org} AND account_id=${owner}`;
   await assert.rejects(storeMediaUpload(upload),/MEDIA_SCOPE_DENIED/);
   const audit=await sql`SELECT action FROM media_library_audit WHERE media_id=${media.id}`;
   assert.ok(audit.some(a=>a.action==="upload"));assert.ok(audit.some(a=>a.action==="processed"));
@@ -57,6 +69,7 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
   await sql`DELETE FROM media_library_audit WHERE organization_id IN (${org},${other})`;
   await sql`DELETE FROM media_versions WHERE organization_id IN (${org},${other})`;
   await sql`DELETE FROM media_library WHERE organization_id IN (${org},${other})`;
+  await sql`DELETE FROM role_grants WHERE organization_id IN (${org},${other})`;
   await sql`DELETE FROM organization_memberships WHERE organization_id IN (${org},${other})`;
   await sql`DELETE FROM accounts WHERE id IN (${owner},${stranger})`;
   await sql`DELETE FROM organizations WHERE id IN (${org},${other})`;

@@ -41,7 +41,9 @@ CREATE TABLE media_library_audit (
   media_id uuid NOT NULL,
   revision integer NOT NULL,
   actor_account_id uuid REFERENCES accounts(id),
-  action text NOT NULL CHECK(action IN ('upload','processed','reject','revoke','playback')),
+  action text NOT NULL CHECK(action IN ('upload','processed','reject','revoke','playback','moderate')),
+  reason_code text CHECK(reason_code IN ('copyright','safety','consent')),
+  CHECK(action <> 'moderate' OR (reason_code IS NOT NULL AND actor_account_id IS NOT NULL)),
   recorded_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY(media_id, revision) REFERENCES media_versions(media_id, revision)
 );

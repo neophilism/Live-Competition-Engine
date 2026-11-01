@@ -3,6 +3,7 @@ import { mediaUploadLimit, mediaRightsVersion, type MediaUpload } from "./media-
 import type { MediaKind } from "./media-validation.ts";
 
 interface MediaStorage {
+  list(organizationId:string,accountId:string):Promise<readonly {id:string;revision:number;filename:string;kind:MediaKind;status:string;createdAt:Date}[]>;
   upload(input: MediaUpload): Promise<{ id: string; revision: number }>;
   playback(organizationId: string, accountId: string, id: string): Promise<{ mime: string; content: Uint8Array; revision: number } | null>;
   revoke(organizationId: string, accountId: string, id: string): Promise<boolean>;
@@ -11,27 +12,29 @@ const uuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab
 const headers = { "cache-control": "private, no-store", vary: "Authorization", "x-content-type-options": "nosniff" };
 const reply = (status: number, error: string) => Response.json({ error }, { status, headers });
 
-async function boundedBody(request: Request): Promise<Uint8Array> {
+export async function boundedMediaBody(request: Request, limit=mediaUploadLimit): Promise<Uint8Array> {
   const declared = request.headers.get("content-length");
-  if (declared !== null && (!/^[0-9]+$/.test(declared) || Number(declared) > mediaUploadLimit)) {
+  if (declared !== null && (!/^[0-9]+$/.test(declared) || Number(declared) > limit)) {
     throw new Error("MEDIA_SIZE_FORBIDDEN");
   }
   if (!request.body) throw new Error("MEDIA_SIZE_FORBIDDEN");
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
+  let timer: ReturnType<typeof setTimeout>;
+  const deadline=new Promise<never>((_resolve,reject)=>{timer=setTimeout(()=>reject(new Error("MEDIA_SIZE_FORBIDDEN")),30_000);});
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(),deadline]);
       if (done) break;
       size += value.byteLength;
-      if (size > mediaUploadLimit) throw new Error("MEDIA_SIZE_FORBIDDEN");
+      if (size > limit) throw new Error("MEDIA_SIZE_FORBIDDEN");
       chunks.push(value);
     }
   } catch (cause) {
     await reader.cancel().catch(() => {});
     throw cause;
-  } finally { reader.releaseLock(); }
+  } finally { clearTimeout(timer!);reader.releaseLock(); }
   if (size === 0 || (declared !== null && Number(declared) !== size)) throw new Error("MEDIA_SIZE_FORBIDDEN");
   return new Uint8Array(Buffer.concat(chunks, size));
 }
@@ -48,6 +51,11 @@ export function createMediaHandlers(authorizer: Pick<AuthenticationService, "aut
     }
   }
   return {
+    async list(request:Request,organizationId:string):Promise<Response> {
+      const actor=await authenticate(request,organizationId);if(actor instanceof Response)return actor;
+      try{return Response.json({items:await storage.list(organizationId,actor.accountId)},{headers});}
+      catch{return reply(503,"media_unavailable");}
+    },
     async upload(request: Request, organizationId: string, mediaId?: string): Promise<Response> {
       const actor = await authenticate(request, organizationId, mediaId); if (actor instanceof Response) return actor;
       const rights = request.headers.get("x-media-rights-version");
@@ -62,7 +70,7 @@ export function createMediaHandlers(authorizer: Pick<AuthenticationService, "aut
           kind: request.headers.get("x-media-kind") as MediaKind,
           mime: request.headers.get("content-type") ?? "",
           filename: request.headers.get("x-media-filename") ?? "",
-          rightsVersion: rights, content: await boundedBody(request)
+          rightsVersion: rights, content: await boundedMediaBody(request)
         });
         return Response.json({ ...result, status: "quarantined" }, { status: 202, headers });
       } catch (cause) {
