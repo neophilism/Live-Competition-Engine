@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getSqlClient, closeDatabaseConnection } from "./index.ts";
-import { storeMediaUpload, readMediaPlayback, revokeMedia, claimMediaWork, completeMediaWork, moderateMedia, listOwnedMedia } from "./media-library.ts";
+import { storeMediaUpload, readMediaPlayback, revokeMedia, claimMediaWork, completeMediaWork, moderateMedia, listOwnedMedia, listMediaVersions } from "./media-library.ts";
 import { mediaRightsVersion } from "./media-policy.ts";
 
 test("media persistence isolates tenants/owners, versions atomically and fences stale workers/revocation", async()=>{
@@ -49,12 +49,23 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
   await sql`UPDATE media_versions SET worker_expires_at=now()-interval '1 second' WHERE media_id=${media.id} AND revision=2`;
   const renewed=await claimMediaWork();assert.equal(renewed?.revision,2);assert.notEqual(renewed?.token,firstLease?.token);
   assert.equal(await completeMediaWork(firstLease!,output),false);
+  const replacement=await storeMediaUpload({...upload,mediaId:media.id,expectedRevision:2});
+  assert.equal(replacement.revision,3);
+  assert.deepEqual((await listMediaVersions(org,owner,media.id)).items.map(v=>v.revision),[3,2,1]);
+  assert.deepEqual((await listMediaVersions(org,owner,media.id,3)).items.map(v=>v.revision),[2,1]);
+  assert.equal((await listMediaVersions(other,owner,media.id)).items.length,0);
+  assert.equal((await listMediaVersions(org,stranger,media.id)).items.length,0);
+  assert.equal(await completeMediaWork(renewed!,output),false);
+  const superseded=await sql`SELECT status,source_content FROM media_versions WHERE media_id=${media.id} AND revision=2`;
+  assert.equal(superseded[0]!.status,"revoked");assert.equal(superseded[0]!.source_content,null);
+  const latest=await claimMediaWork();assert.equal(latest?.revision,3);
   assert.equal(await revokeMedia(org,stranger,media.id),false);
   assert.equal(await revokeMedia(other,owner,media.id),false);
   assert.equal(await revokeMedia(org,owner,media.id),true);
-  assert.equal(await completeMediaWork(renewed!,output),false);
+  assert.equal(await completeMediaWork(latest!,output),false);
   assert.equal(await readMediaPlayback(org,owner,media.id),null);
-  await assert.rejects(storeMediaUpload({...upload,mediaId:media.id,expectedRevision:2}),/MEDIA_REVISION_CONFLICT/);
+  assert.equal((await listMediaVersions(org,owner,media.id)).items.length,0);
+  await assert.rejects(storeMediaUpload({...upload,mediaId:media.id,expectedRevision:3}),/MEDIA_REVISION_CONFLICT/);
   const second=await storeMediaUpload(upload);
   await assert.rejects(moderateMedia(org,stranger,second.id,"copyright"),/MEDIA_SCOPE_DENIED/);
   await sql`INSERT INTO role_grants(account_id,role,organization_id,granted_by_account_id)
@@ -70,7 +81,7 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
   const unmoderated=await sql`SELECT status FROM media_versions WHERE media_id=${third.id}`;
   assert.equal(unmoderated[0]!.status,"quarantined");
   const versions=await sql`SELECT status,source_content,output_content FROM media_versions WHERE media_id=${media.id}`;
-  assert.equal(versions.length,2);assert.ok(versions.every(v=>v.status==="revoked"&&v.source_content===null&&v.output_content===null));
+  assert.equal(versions.length,3);assert.ok(versions.every(v=>v.status==="revoked"&&v.source_content===null&&v.output_content===null));
   for(let i=1;i<100;i++)await storeMediaUpload(upload);
   assert.equal((await listOwnedMedia(org,owner)).length,100);
   await assert.rejects(storeMediaUpload(upload),/MEDIA_QUOTA_EXCEEDED/);

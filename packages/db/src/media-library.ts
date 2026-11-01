@@ -36,6 +36,11 @@ export async function storeMediaUpload(input: MediaUpload): Promise<{ id: string
         AND owner_account_id = ${input.ownerId} AND current_revision = ${input.expectedRevision}
         AND revoked_at IS NULL RETURNING id`;
       if (rows.length !== 1) throw new Error("MEDIA_REVISION_CONFLICT");
+      // Replaced pending originals must not linger outside the worker queue.
+      // Completed historical derivatives remain private for version retention.
+      await tx`UPDATE media_versions SET status='revoked',source_content=NULL,
+        worker_token=NULL,worker_expires_at=NULL
+        WHERE media_id=${id} AND status IN ('quarantined','processing')`;
     } else {
       await tx`INSERT INTO media_library(id, organization_id, owner_account_id)
         VALUES(${id}, ${input.organizationId}, ${input.ownerId})`;
@@ -76,6 +81,20 @@ export async function listOwnedMedia(organizationId: string, ownerId: string) {
     WHERE m.organization_id=${organizationId} AND m.owner_account_id=${ownerId}
     AND m.revoked_at IS NULL AND a.status='active' AND a.suspended_at IS NULL
     ORDER BY m.created_at DESC,m.id LIMIT 100`;
+}
+
+/** Metadata-only immutable revision history. Superseded originals are never served. */
+export async function listMediaVersions(organizationId:string,ownerId:string,id:string,before=2147483647){
+  if(!Number.isSafeInteger(before)||before<1||before>2147483647)throw new Error("MEDIA_REVISION_CONFLICT");
+  const rows=await getSqlClient()<{revision:number;filename:string;kind:MediaKind;status:string;
+    rightsVersion:string;acceptedAt:Date}[]>`SELECT v.revision,v.filename,v.kind,v.status,
+      v.rights_version AS "rightsVersion",v.rights_accepted_at AS "acceptedAt"
+    FROM media_versions v JOIN media_library m ON m.id=v.media_id
+    JOIN organization_memberships a ON a.organization_id=m.organization_id AND a.account_id=m.owner_account_id
+    WHERE m.id=${id} AND m.organization_id=${organizationId} AND m.owner_account_id=${ownerId}
+    AND m.revoked_at IS NULL AND a.status='active' AND a.suspended_at IS NULL AND v.revision<${before}
+    ORDER BY v.revision DESC LIMIT 26`;
+  return{items:rows.slice(0,25),next:rows.length>25?rows[24]!.revision:null};
 }
 
 export async function revokeMedia(organizationId: string, ownerId: string, id: string): Promise<boolean> {

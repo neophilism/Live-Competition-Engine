@@ -35,6 +35,19 @@ describe("media browser API boundary",()=>{
   await expect(client.upload(new File(["html"],"bad.html",{type:"text/html"}))).rejects.toThrow();
   expect(called).toBe(false);
  });
+ it("replaces the exact observed revision and rejects invalid replacement IDs",async()=>{
+  let called=0;
+  const client=createMediaClient(org,async()=>"Bearer fixture",async(input,init)=>{
+   called++;expect(String(input)).toBe("/api/organizations/"+org+"/media/"+id);
+   expect(new Headers(init?.headers).get("if-match")).toBe("3");
+   return Response.json({status:"quarantined"},{status:202});
+  });
+  const file=new File([new Uint8Array([1])],"next.png",{type:"image/png"});
+  await client.upload(file,{id,revision:3});
+  await expect(client.upload(file,{id,revision:0})).rejects.toThrow("Refresh");
+  await expect(client.upload(file,{id:"../other",revision:3})).rejects.toThrow("Invalid media item");
+  expect(called).toBe(1);
+ });
  it("fetches private playback bytes and uses DELETE for withdrawal",async()=>{
   const methods:string[]=[];
   const client=createMediaClient(org,async()=>"Bearer fixture",async(input,init)=>{
@@ -47,6 +60,15 @@ describe("media browser API boundary",()=>{
  it("does not reveal server failure details",async()=>{
   const client=createMediaClient(org,async()=>"Bearer fixture",async()=>new Response("private database detail",{status:503}));
   await expect(client.list()).rejects.toThrow("Media is unavailable");
+ });
+ it("pages revision metadata without identity tokens in URLs",async()=>{
+  let called=0;
+  const client=createMediaClient(org,async()=>"Bearer fixture",async(input)=>{
+   called++;expect(String(input)).toBe("/api/organizations/"+org+"/media/"+id+"/versions?before=12");
+   return Response.json({items:[],next:null});
+  });
+  expect(await client.versions(id,12)).toEqual({items:[],next:null});
+  await expect(client.versions(id,0)).rejects.toThrow("Invalid revision cursor");expect(called).toBe(1);
  });
 });
 

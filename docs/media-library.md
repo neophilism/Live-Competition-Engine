@@ -20,12 +20,16 @@ An active tenant member uploads only as their authenticated account:
 Successful upload returns 202 and a quarantined media ID/revision, never public access.
 Replace with POST to `.../media/{mediaId}` and `If-Match: {currentRevision}`.
 Concurrent stale replacements fail. Every revision retains the consent version
-and acceptance time. Ownership is derived from the session, never client IDs.
+and acceptance time. Superseded pending originals are erased and their workers
+fenced immediately; completed historical derivatives remain private until withdrawal.
+Ownership is derived from the session, never client IDs.
 The server computes the digest and validates size, filename and binary signature.
 A matching signature is not content safety approval.
 
 GET on the item returns only its current approved derivative to its owner,
-after fresh membership checks. Originals are never served. Responses are private,
+and GET on its /versions endpoint returns bounded owner-only metadata history
+with an exclusive numeric before cursor. It never exposes old source payloads.
+Both recheck active membership. Originals are never served. Responses are private,
 no-store, nosniff and sandboxed. DELETE withdraws consent, revokes every revision,
 erases source/derivative payloads, and fences in-flight workers. Previously
 downloaded copies cannot be recalled. Upload, processing, playback and withdrawal
