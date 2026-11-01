@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, char, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, char, check, customType, foreignKey, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const competitionStatus = pgEnum("competition_status", ["draft", "published", "live", "paused", "completed", "cancelled"]);
 export const entryStatus = pgEnum("entry_status", ["pending", "approved", "withdrawn", "disqualified"]);
@@ -249,3 +249,60 @@ export const organizationDomains = pgTable("organization_domains", {
 }, (t) => [
   index("organization_domains_org_status_idx").on(t.organizationId, t.status)
 ]);
+
+
+const mediaBytea=customType<{data:Buffer}>({dataType(){return "bytea";}});
+export const mediaLibrary=pgTable("media_library",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ organizationId:uuid("organization_id").notNull().references(()=>organizations.id),
+ ownerAccountId:uuid("owner_account_id").notNull(),
+ currentRevision:integer("current_revision").notNull().default(1),
+ revokedAt:timestamp("revoked_at",{withTimezone:true}),
+ createdAt:timestamp("created_at",{withTimezone:true}).notNull().defaultNow()
+},t=>[
+ unique().on(t.organizationId,t.id),
+ foreignKey({columns:[t.organizationId,t.ownerAccountId],foreignColumns:[organizationMemberships.organizationId,organizationMemberships.accountId]}),
+ check("media_library_revision_positive",sql`${t.currentRevision}>0`)
+]);
+export const mediaVersions=pgTable("media_versions",{
+ mediaId:uuid("media_id").notNull(),organizationId:uuid("organization_id").notNull(),
+ revision:integer("revision").notNull(),kind:text("kind").notNull(),filename:text("filename").notNull(),
+ sourceMime:text("source_mime").notNull(),sourceSha256:char("source_sha256",{length:64}).notNull(),
+ sourceContent:mediaBytea("source_content"),rightsVersion:text("rights_version").notNull(),
+ rightsAcceptedAt:timestamp("rights_accepted_at",{withTimezone:true}).notNull().defaultNow(),
+ status:text("status").notNull().default("quarantined"),workerToken:uuid("worker_token"),
+ workerExpiresAt:timestamp("worker_expires_at",{withTimezone:true}),outputMime:text("output_mime"),
+ outputSha256:char("output_sha256",{length:64}),outputContent:mediaBytea("output_content"),
+ safetyEvidence:text("safety_evidence"),createdAt:timestamp("created_at",{withTimezone:true}).notNull().defaultNow()
+},t=>[
+ primaryKey({columns:[t.mediaId,t.revision]}),unique().on(t.organizationId,t.mediaId,t.revision),
+ foreignKey({columns:[t.organizationId,t.mediaId],foreignColumns:[mediaLibrary.organizationId,mediaLibrary.id]}),
+ index("media_versions_work_idx").on(t.status,t.createdAt),
+ check("media_versions_revision_positive",sql`${t.revision}>0`),
+ check("media_versions_kind_valid",sql`${t.kind} IN ('image','audio','video')`),
+ check("media_versions_filename_valid",sql`length(${t.filename}) BETWEEN 1 AND 160 AND ${t.filename} ~ '^[A-Za-z0-9][A-Za-z0-9._ -]*$' AND position('..' IN ${t.filename})=0`),
+ check("media_versions_rights_valid",sql`${t.rightsVersion}='media-rights-v1'`),
+ check("media_versions_status_valid",sql`${t.status} IN ('quarantined','processing','ready','rejected','revoked')`),
+ check("media_versions_source_size",sql`${t.sourceContent} IS NULL OR octet_length(${t.sourceContent}) BETWEEN 1 AND 8388608`),
+ check("media_versions_output_size",sql`${t.outputContent} IS NULL OR octet_length(${t.outputContent}) BETWEEN 1 AND 8388608`),
+ check("media_versions_source_hash",sql`${t.sourceSha256} ~ '^[0-9a-f]{64}$'`),
+ check("media_versions_output_hash",sql`${t.outputSha256} IS NULL OR ${t.outputSha256} ~ '^[0-9a-f]{64}$'`),
+ check("media_versions_source_type",sql`(${t.kind}='image' AND ${t.sourceMime} IN ('image/png','image/jpeg','image/webp')) OR (${t.kind}='video' AND ${t.sourceMime} IN ('video/mp4','video/webm')) OR (${t.kind}='audio' AND ${t.sourceMime} IN ('audio/mpeg','audio/ogg','audio/wav'))`),
+ check("media_versions_output_type",sql`${t.outputMime} IS NULL OR (${t.kind}='image' AND ${t.outputMime}='image/jpeg') OR (${t.kind}='video' AND ${t.outputMime}='video/mp4') OR (${t.kind}='audio' AND ${t.outputMime}='audio/ogg')`),
+ check("media_versions_ready_requires_evidence",sql`${t.status}<>'ready' OR (${t.outputContent} IS NOT NULL AND ${t.outputMime} IS NOT NULL AND ${t.outputSha256} IS NOT NULL AND ${t.safetyEvidence} IS NOT NULL)`),
+ check("media_versions_processing_requires_lease",sql`${t.status}<>'processing' OR (${t.workerToken} IS NOT NULL AND ${t.workerExpiresAt} IS NOT NULL)`)
+]);
+export const mediaLibraryAudit=pgTable("media_library_audit",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ organizationId:uuid("organization_id").notNull().references(()=>organizations.id),
+ mediaId:uuid("media_id").notNull(),revision:integer("revision").notNull(),
+ actorAccountId:uuid("actor_account_id").references(()=>accounts.id),action:text("action").notNull(),
+ reasonCode:text("reason_code"),recordedAt:timestamp("recorded_at",{withTimezone:true}).notNull().defaultNow()
+},t=>[
+ foreignKey({columns:[t.organizationId,t.mediaId,t.revision],foreignColumns:[mediaVersions.organizationId,mediaVersions.mediaId,mediaVersions.revision]}),
+ foreignKey({columns:[t.organizationId,t.actorAccountId],foreignColumns:[organizationMemberships.organizationId,organizationMemberships.accountId]}),
+ check("media_library_audit_action_valid",sql`${t.action} IN ('upload','processed','reject','revoke','playback','moderate')`),
+ check("media_library_audit_reason_valid",sql`${t.reasonCode} IN ('copyright','safety','consent')`),
+ check("media_library_audit_moderation_evidence",sql`${t.action}<>'moderate' OR (${t.reasonCode} IS NOT NULL AND ${t.actorAccountId} IS NOT NULL)`)
+]);
+
