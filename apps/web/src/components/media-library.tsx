@@ -10,11 +10,13 @@ export function MediaLibrary({client}:{client:MediaClient}){
  const [replacing,setReplacing]=useState<MediaItem|null>(null);
  const [history,setHistory]=useState<{id:string;items:MediaVersion[];next:number|null}|null>(null);
  const epoch=useRef(0);
+ const viewEpoch=useRef(0),historyEpoch=useRef(0);
  const fileInput=useRef<HTMLInputElement>(null);
  useEffect(()=>{
   const current=++epoch.current;setItems([]);setFile(null);setConsent(false);setPreview(null);setMessage("");setBusy(true);
   setReplacing(null);
   setHistory(null);
+  viewEpoch.current++;historyEpoch.current++;
   if(fileInput.current)fileInput.current.value="";
   client.list().then(rows=>{if(epoch.current===current)setItems(rows);})
    .catch(cause=>{if(epoch.current===current)setMessage(cause instanceof Error?cause.message:"Unable to load media.");})
@@ -34,8 +36,8 @@ export function MediaLibrary({client}:{client:MediaClient}){
   await action(async()=>{
    await client.upload(file,replacing??undefined);
    if(epoch.current===current){setFile(null);setConsent(false);setReplacing(null);
-    if(replacing&&preview?.item.id===replacing.id)setPreview(null);
-    if(replacing&&history?.id===replacing.id)setHistory(null);
+    if(replacing&&preview?.item.id===replacing.id){viewEpoch.current++;setPreview(null);}
+    if(replacing&&history?.id===replacing.id){historyEpoch.current++;setHistory(null);}
     if(fileInput.current)fileInput.current.value="";
     setMessage("Uploaded. Your file will be available after its checks.");}
   });
@@ -59,33 +61,33 @@ export function MediaLibrary({client}:{client:MediaClient}){
   <ul>{items.map(item=><li key={item.id}>
    <span>{item.filename}</span> <span>Version {item.revision} · {statusLabel[item.status]??"Unavailable"}</span>
    <button disabled={busy||item.status!=="ready"} onClick={()=>void action(async()=>{
-    const current=epoch.current;const blob=await client.playback(item.id);
-    if(epoch.current===current)setPreview({url:URL.createObjectURL(blob),item});
+    const current=epoch.current,view=++viewEpoch.current;const blob=await client.playback(item.id);
+    if(epoch.current===current&&viewEpoch.current===view)setPreview({url:URL.createObjectURL(blob),item});
    })}>Open {item.filename}</button>
    <button disabled={busy} onClick={()=>{setReplacing(item);setFile(null);setConsent(false);if(fileInput.current){fileInput.current.value="";fileInput.current.focus();}}}>Replace {item.filename}</button>
    <button disabled={busy} aria-expanded={history?.id===item.id} onClick={()=>void action(async()=>{
-    const current=epoch.current;const result=await client.versions(item.id);
-    if(epoch.current===current)setHistory({id:item.id,...result});
+    const current=epoch.current,view=++historyEpoch.current;const result=await client.versions(item.id);
+    if(epoch.current===current&&historyEpoch.current===view)setHistory({id:item.id,...result});
    })}>Versions of {item.filename}</button>
    <button disabled={busy} onClick={()=>void action(async()=>{
-    const current=epoch.current;await client.revoke(item.id);if(epoch.current===current&&preview?.item.id===item.id)setPreview(null);
-    if(epoch.current===current&&history?.id===item.id)setHistory(null);
+    const current=epoch.current;await client.revoke(item.id);if(epoch.current===current&&preview?.item.id===item.id){viewEpoch.current++;setPreview(null);}
+    if(epoch.current===current&&history?.id===item.id){historyEpoch.current++;setHistory(null);}
    })}>Withdraw {item.filename}</button>
   </li>)}</ul>
   {preview?<div>
    <h2>{preview.item.filename}</h2>
    {preview.item.kind==="image"?<img src={preview.url} alt={preview.item.filename} style={{maxWidth:"100%",maxHeight:"60vh"}}/>:
     preview.item.kind==="audio"?<audio src={preview.url} controls style={{maxWidth:"100%"}}/>:<video src={preview.url} controls style={{maxWidth:"100%",maxHeight:"60vh"}}/>}
-   <button onClick={()=>setPreview(null)}>Close preview</button>
+   <button onClick={()=>{viewEpoch.current++;setPreview(null);}}>Close preview</button>
   </div>:null}
   {history?<section aria-label="Version history">
    <h2>Version history</h2>
    <ul>{history.items.map(version=><li key={version.revision}>Version {version.revision}: {version.filename} · {statusLabel[version.status]??"No longer available"} · Consent {version.rightsVersion} accepted {new Date(version.acceptedAt).toLocaleString()}</li>)}</ul>
    {history.next!==null?<button disabled={busy} onClick={()=>void action(async()=>{
-    const current=epoch.current;const result=await client.versions(history.id,history.next!);
-    if(epoch.current===current)setHistory({...history,items:[...history.items,...result.items],next:result.next});
+    const current=epoch.current,view=historyEpoch.current;const result=await client.versions(history.id,history.next!);
+    if(epoch.current===current&&historyEpoch.current===view)setHistory({...history,items:[...history.items,...result.items],next:result.next});
    })}>Older versions</button>:null}
-   <button onClick={()=>setHistory(null)}>Close version history</button>
+   <button onClick={()=>{historyEpoch.current++;setHistory(null);}}>Close version history</button>
   </section>:null}
   <p>Withdrawing a file removes its stored versions and stops future playback. Copies already downloaded cannot be recalled.</p>
  </section>;
