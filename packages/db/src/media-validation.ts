@@ -4,7 +4,7 @@ export interface ProposedMedia {
   tenantId: string; ownerId: string; kind: MediaKind;
   mime: string; bytes: number; sha256: string; filename: string;
 }
-const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{12}$/i;
+const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const HASH=/^[a-f0-9]{64}$/i;
 const TYPES: Record<MediaKind, readonly string[]> = {
   image:['image/png','image/jpeg','image/webp'],
@@ -21,3 +21,4 @@ export function validateMediaSubmission(input:ProposedMedia):Readonly<ProposedMe
  return Object.freeze({...input});
 }
 /** Metadata validation is not content scanning, tenancy authorization or publish approval. */
+

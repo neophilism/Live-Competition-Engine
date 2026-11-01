@@ -9,7 +9,10 @@
     "./schema": "./src/schema.ts",
     "./tenant-theme": "./src/tenant-theme.ts",
     "./tenant-brand-assets": "./src/tenant-brand-assets.ts",
-    "./tenant-domains": "./src/tenant-domains.ts"
+    "./tenant-domains": "./src/tenant-domains.ts",
+    "./media-library": "./src/media-library.ts",
+    "./media-http": "./src/media-http.ts",
+    "./media-worker": "./src/media-worker.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
