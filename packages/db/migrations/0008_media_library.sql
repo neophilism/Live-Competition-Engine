@@ -28,8 +28,17 @@ CREATE TABLE media_versions (
   safety_evidence text,
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY(media_id, revision),
+  UNIQUE(organization_id, media_id, revision),
   FOREIGN KEY(organization_id, media_id) REFERENCES media_library(organization_id, id),
   CHECK (source_content IS NULL OR octet_length(source_content) BETWEEN 1 AND 8388608),
+  CHECK (filename ~ '^[A-Za-z0-9][A-Za-z0-9._ -]*$' AND position('..' IN filename)=0),
+  CHECK (source_sha256 ~ '^[0-9a-f]{64}$'),
+  CHECK (output_sha256 IS NULL OR output_sha256 ~ '^[0-9a-f]{64}$'),
+  CHECK ((kind='image' AND source_mime IN ('image/png','image/jpeg','image/webp'))
+    OR (kind='video' AND source_mime IN ('video/mp4','video/webm'))
+    OR (kind='audio' AND source_mime IN ('audio/mpeg','audio/ogg','audio/wav'))),
+  CHECK (output_mime IS NULL OR (kind='image' AND output_mime='image/jpeg')
+    OR (kind='video' AND output_mime='video/mp4') OR (kind='audio' AND output_mime='audio/ogg')),
   CHECK (output_content IS NULL OR octet_length(output_content) BETWEEN 1 AND 8388608),
   CHECK (status <> 'ready' OR (output_content IS NOT NULL AND output_mime IS NOT NULL AND output_sha256 IS NOT NULL AND safety_evidence IS NOT NULL)),
   CHECK (status <> 'processing' OR (worker_token IS NOT NULL AND worker_expires_at IS NOT NULL))
@@ -45,6 +54,7 @@ CREATE TABLE media_library_audit (
   reason_code text CHECK(reason_code IN ('copyright','safety','consent')),
   CHECK(action <> 'moderate' OR (reason_code IS NOT NULL AND actor_account_id IS NOT NULL)),
   recorded_at timestamptz NOT NULL DEFAULT now(),
-  FOREIGN KEY(media_id, revision) REFERENCES media_versions(media_id, revision)
+  FOREIGN KEY(organization_id, media_id, revision) REFERENCES media_versions(organization_id, media_id, revision),
+  FOREIGN KEY(organization_id, actor_account_id) REFERENCES organization_memberships(organization_id, account_id)
 );
 

@@ -18,6 +18,12 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
     VALUES(${org},${owner}),(${org},${stranger}),(${other},${owner})`;
   const media=await storeMediaUpload(upload);
   assert.equal(media.revision,1);
+  await assert.rejects(sql`INSERT INTO media_library_audit(organization_id,media_id,revision,action)
+    VALUES(${other},${media.id},1,'reject')`,/foreign key/);
+  await assert.rejects(sql`UPDATE media_versions SET organization_id=${other} WHERE media_id=${media.id}`,/foreign key/);
+  await assert.rejects(sql`UPDATE media_versions SET source_mime='text/html' WHERE media_id=${media.id}`,/check constraint/);
+  await assert.rejects(sql`UPDATE media_versions SET filename='../escape.png' WHERE media_id=${media.id}`,/check constraint/);
+  await assert.rejects(sql`UPDATE media_versions SET status='ready' WHERE media_id=${media.id}`,/check constraint/);
   assert.equal((await listOwnedMedia(org,owner)).length,1);
   assert.equal((await listOwnedMedia(other,owner)).length,0);
   assert.equal((await listOwnedMedia(org,stranger)).length,0);
@@ -58,8 +64,18 @@ test("media persistence isolates tenants/owners, versions atomically and fences 
   assert.equal(await readMediaPlayback(org,owner,second.id),null);
   const moderation=await sql`SELECT action,reason_code FROM media_library_audit WHERE media_id=${second.id} AND action='moderate'`;
   assert.equal(moderation[0]!.reason_code,"copyright");
+  const third=await storeMediaUpload(upload);
+  await sql`UPDATE role_grants SET revoked_at=now() WHERE organization_id=${org} AND account_id=${stranger}`;
+  await assert.rejects(moderateMedia(org,stranger,third.id,"safety"),/MEDIA_SCOPE_DENIED/);
+  const unmoderated=await sql`SELECT status FROM media_versions WHERE media_id=${third.id}`;
+  assert.equal(unmoderated[0]!.status,"quarantined");
   const versions=await sql`SELECT status,source_content,output_content FROM media_versions WHERE media_id=${media.id}`;
   assert.equal(versions.length,2);assert.ok(versions.every(v=>v.status==="revoked"&&v.source_content===null&&v.output_content===null));
+  for(let i=1;i<100;i++)await storeMediaUpload(upload);
+  assert.equal((await listOwnedMedia(org,owner)).length,100);
+  await assert.rejects(storeMediaUpload(upload),/MEDIA_QUOTA_EXCEEDED/);
+  assert.equal(await revokeMedia(org,owner,third.id),true);
+  assert.equal((await storeMediaUpload(upload)).revision,1);
   await sql`UPDATE organization_memberships SET status='suspended',suspended_at=now() WHERE organization_id=${org} AND account_id=${owner}`;
   await assert.rejects(storeMediaUpload(upload),/MEDIA_SCOPE_DENIED/);
   const audit=await sql`SELECT action FROM media_library_audit WHERE media_id=${media.id}`;
